@@ -155,12 +155,42 @@ const setupSignup = () => {
   })
   $submit.addEventListener('click', () => {
     // signup button click
+    fetch('https://js5.c0d3.com/auth/api/users', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: $name.value,
+        username: $username.value,
+        email: $email.value,
+        password: btoa($password.value)
+      })
+    })
+      .then(res => res.json())
+      .then(body => {
+        console.log(body);
+      })
   })
 }
 
 const $appContainer = document.querySelector('.app-container')
 const startApp = () => {
   // 1. Start here!
+
+  // send a GET request
+  fetch('https://js5.c0d3.com/auth/api/sessions', {
+    method: 'GET' // 'GET' is the default method so this is not neccessary
+  })
+    .then(res => {
+      return res.json()
+    })
+    .then(body => {
+      console.log(body)
+      if (body.error) {
+        setupLogin()
+      }
+    })
 }
 startApp()
 </script>
