@@ -102,6 +102,21 @@ const render = () => {
   input.addEventListener('keyup', (e) => {
     if (e.key==='Enter') {
       // Tell the server to create a todo item!
+      // THIS FETCH IS CURRENTLY BEING BLOCKED BY CORS
+      fetch('https://js5.c0d3.com/todolist/api/todos', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: {
+        }
+      })
+        .then(res => res.json())
+        .then(body => {
+          console.log(body)
+        })
+        .then(render)
     }
   })
 
@@ -157,6 +172,7 @@ const setupSignup = () => {
     // signup button click
     fetch('https://js5.c0d3.com/auth/api/users', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'content-type': 'application/json'
       },
@@ -169,7 +185,10 @@ const setupSignup = () => {
     })
       .then(res => res.json())
       .then(body => {
-        console.log(body);
+        if (body.username) {
+        globalUsername = body.username
+        render()
+      }
       })
   })
 }
@@ -180,15 +199,19 @@ const startApp = () => {
 
   // send a GET request
   fetch('https://js5.c0d3.com/auth/api/sessions', {
-    method: 'GET' // 'GET' is the default method so this is not neccessary
+    method: 'GET', // 'GET' is the default method so this is not neccessary
+    credentials: 'include'
   })
     .then(res => {
       return res.json()
     })
     .then(body => {
-      console.log(body)
       if (body.error) {
         setupLogin()
+      }
+      if (body.username) {
+        globalUsername = body.username
+        render()
       }
     })
 }
