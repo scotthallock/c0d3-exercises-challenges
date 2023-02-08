@@ -30,11 +30,12 @@ app.get('/delay', async (req, res) => {
 
 // Create a file with the file name hello.
 // Create a get path called /getfile that sends back the file.
-const fs = require('fs/promises');
 
+const fs = require('fs');
 /* create the file */
-fs.writeFile('hello.txt', `Hey what's up hello`);
+fs.writeFile('hello.txt', `Hey what's up hello`, (err) => {});
 
+/* using res.sendFile() */
 app.get('/getfile', async (req, res) => {
     res.sendFile('hello.txt', {root: __dirname}, (err, data) => {
         if (err) {
@@ -45,15 +46,14 @@ app.get('/getfile', async (req, res) => {
     });
 });
 
-/* This doesn't work - why ? */
-// app.get('/getfile', async (req, res) => {
-//     fs.readFile('hello.txt', (err, data) => {
-//         if (err) return res.status(500).send('Error: Error reading file')
-//         res.send(`<div>${data}</div>`)
-//     })
-// })
+/* using fs.readFile */
+app.get('/getfile', async (req, res) => {
+    fs.readFile('hello.txt', (err, data) => {
+        if (err) return res.status(500).send('Error: Error reading file')
+        res.send(`<div>${data}</div>`)
+    })
+})
+ 
 
-
-  
 
 app.listen(3000); // Listen to a port number.
