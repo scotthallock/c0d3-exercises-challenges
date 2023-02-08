@@ -36,15 +36,15 @@ const fs = require('fs');
 fs.writeFile('hello.txt', `Hey what's up hello`, (err) => {});
 
 /* using res.sendFile() */
-app.get('/getfile', async (req, res) => {
-    res.sendFile('hello.txt', {root: __dirname}, (err, data) => {
-        if (err) {
-            console.log(err);
-            return res.status(500).send('Error: Error sending file');
-        }
-        console.log('Sent file successfully.');
-    });
-});
+// app.get('/getfile', async (req, res) => {
+//     res.sendFile('hello.txt', {root: __dirname}, (err, data) => {
+//         if (err) {
+//             console.log(err);
+//             return res.status(500).send('Error: Error sending file');
+//         }
+//         console.log('Sent file successfully.');
+//     });
+// });
 
 /* using fs.readFile */
 app.get('/getfile', async (req, res) => {
@@ -53,7 +53,13 @@ app.get('/getfile', async (req, res) => {
         res.send(`<div>${data}</div>`)
     })
 })
- 
 
+// Create a path called /abtest which displays Hello World in green 1 in 5 times.
+// The rest of the times, it will display in red.
+let abCount = 1;
+app.get('/abtest', (req, res) => {
+    abCount += 1;
+    res.send(`<h1 style="color:${abCount % 5 === 0 ? 'green' : 'red'}">Hello World</h1>`);
+});
 
 app.listen(3000); // Listen to a port number.
