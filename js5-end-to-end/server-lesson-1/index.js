@@ -62,4 +62,44 @@ app.get('/abtest', (req, res) => {
     res.send(`<h1 style="color:${abCount % 5 === 0 ? 'green' : 'red'}">Hello World</h1>`);
 });
 
+
+/**
+ * REQUEST AND RESPONSE HEADERS
+ */
+
+/* setting and getting cookies */
+app.get('/set', (req, res) => {
+    /* set the cookie before sending */
+    res.set({
+        'set-cookie': 'name=c0d3js5' // set a key-value pair for the cookie
+    })
+    /* in the Application tab of developer tools, we can see a cookie with value `c0d3js5` */
+    res.send(`<h1>Cookie has been set</h1>`)
+});
+
+app.get('/', (req, res) => {
+    /* get the cookie from the req parameter */
+    res.send(`<h1>Welcome ${req.get('cookie')}</h1>`);
+});
+
+/**
+ * CACHE CONTROL
+ * on our first request, the server takes 3 seconds to respond
+ * after the text appears, if we make get request to /ignore again,
+ * by opening a new tab with the path /ignore,
+ * we will see the 'Cached page' text immediately because the response
+ * was saved in the cache
+ * 
+ * however, hitting the refresh button appears to force a new response
+ */
+app.get('/ignore', (req, res) => {
+    /* see if the server actually recieved a request or not */
+    console.log('ouch', Date.now());
+    res.set('Cache-Control', 'max-age=120'); // save the response for 120 seconds
+    setTimeout(() => {
+        res.send('<h1>Cached page</h1>')
+    }, 3000);
+})
+
+
 app.listen(3000); // Listen to a port number.
