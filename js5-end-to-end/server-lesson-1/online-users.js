@@ -8,7 +8,6 @@ app.get('/online', (req, res) => {
     }
     const name = req.query.name;
     timeLastSeen[name] = Date.now();
-    console.log(timeLastSeen)
 
     /**
      * The body (HTML) we are sending back will include a script
@@ -32,12 +31,14 @@ app.get('/online', (req, res) => {
                 console.log(data); // data is an object
                 const usersOnline = Object.keys(data).reduce((acc, user) => {
                     return acc + '<p>' + user + ' ... ' + data[user] + '</p>'
-                }, '');
-                document.getElementById('other-users').innerHTML = usersOnline; // render the data on screen
-                setTimeout(() => {
-                    getData(); // recursively call the function wrapping the fetch()
-                }, 1000); // once per second
-            })
+            }, '');
+
+        document.getElementById('other-users').innerHTML = usersOnline; // render the data on screen
+
+        setTimeout(() => {
+            getData(); // recursively call the function wrapping the fetch()
+        }, 1000); // once per second
+        })
     };
     getData();
     </script>
@@ -46,7 +47,6 @@ app.get('/online', (req, res) => {
 });
 
 app.get('/users', (req, res) => {
-
     const authorName = req.query.name;
     timeLastSeen[authorName] = Date.now(); // update the user that sent the request
     Object.keys(timeLastSeen).forEach(user => {
@@ -58,9 +58,6 @@ app.get('/users', (req, res) => {
     res.json(timeLastSeen); // send a JSON string of our users object
 
 })
-
-
-
 
 app.listen(3333);
 console.log('Your server is running at localhost:3333');
