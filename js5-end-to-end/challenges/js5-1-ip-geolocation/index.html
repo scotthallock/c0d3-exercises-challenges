@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Geolocation</title>
+    <style>
+    h1, h2 {
+        margin: 0px
+    }
+    #main-container {
+        display: flex;
+        flex-direction: row;
+        height: 400px;
+    }
+    #map-container {
+        height: 100%;
+        width: 50%;
+    }
+    #visitors-container {
+        padding: 10px;
+        overflow: auto;
+    }
+    #test-ip-container {
+        padding: 5px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    </style>
+</head>
+<body>
+    <h1 id="welcome-header">Hello</h1>
+    <div id="main-container" style=>
+        <div id="map-container"></div>
+        <div id="visitors-container">
+            <h2>Where our visitors come from:</h2>
+            <div id="visitors-list"></div>
+        </div>
+    </div>
+    <hr>
+    <h2>Click a button to sent a request from a fake IP:</h2>
+    <div id="test-ip-container">
+        <button class="test-ip" id="54.119.40.180">54.119.40.180 (US)</button>
+        <button class="test-ip" id ="77.255.219.178">77.255.219.178 (Bydgoszcz, KP, PL)</button>
+        <button class="test-ip" id ="7144.40.162.245">7144.40.162.245 (Seattle, WA, US)</button>
+        <button class="test-ip" id ="7171.190.222.169">7171.190.222.169 (US)</button>
+        <button class="test-ip" id ="7202.239.50.50">7202.239.50.50 (JP)</button>
+        <button class="test-ip" id ="7182.78.90.106">7182.78.90.106 (IN)</button>
+        <button class="test-ip" id ="7182.78.90.106">7182.78.90.106 (Taipei, TPE, TW)</button>
+        <button class="test-ip" id ="7110.77.26.223">7110.77.26.223 (HA, CN)</button>
+        <button class="test-ip" id ="7112.107.151.49">7112.107.151.49 (KR)</button>
+        <button class="test-ip" id ="7150.160.153.44">7150.160.153.44 (Rochester, NY, US)</button>
+        <button class="test-ip" id ="7139.129.157.57">7139.129.157.57 (Qingdao, SD, CN)</button>
+        <button class="test-ip" id ="772.244.115.99">772.244.115.99 (Glendale, CA, US)</button>
+        <button class="test-ip" id ="718.203.210.57">718.203.210.57 (Dublin, L, IE)</button>
+        <button class="test-ip" id ="7251.181.46.138">7251.181.46.138 (Chicago, IL, US)</button>
+        <button class="test-ip" id ="119.62.215.237">7119.62.215.237 (YN, CN)</button>
+        <button class="test-ip" id ="725.228.22.178">725.228.22.178 (GB)</button>
+        <button class="test-ip" id ="67.200.129.103">767.200.129.103 (Dallas, TX, US)</button>
+        <button class="test-ip" id ="738.211.189.237">738.211.189.237 (US)</button>
+    </div>
+
+    <script>
+
+
+    console.log('hello world')
+
+
+    const sendRequest = (clientIP) => {
+        /* make a GET request with the x-forwarded-for header */
+        fetch('./visitors', {
+            method: 'GET',
+            headers: {
+                'x-forwarded-for': clientIP
+            }
+        })
+            .then(res => {
+                return res.json();
+            })
+            .then(data => {
+                $welcomeHeader.innerText = `Welcome, user from ${data.location}!`;
+                console.log(data.visitorsHTML)
+                $visitorsList.innerHTML = data.visitorsHTML;
+                myMap(data.lat, data.lng);
+            });
+    };
+
+
+
+    function myMap(lat, lng) {
+        var mapProp = {
+            center: new google.maps.LatLng(lat || 41.8719, lng || -87.6589),
+            zoom: 11
+        };
+        var map = new google.maps.Map(document.getElementById('map-container'), mapProp);
+            
+        new google.maps.Marker({
+            position: {lat: lat || 41.8719, lng: lng || -87.6589},
+            map: map,
+            title: '52 Hits'
+        });
+        console.log('myMap() was called')
+    };
+
+
+    const $welcomeHeader = document.getElementById('welcome-header');
+    const $map = document.getElementById('map');
+    const $visitorsContainer = document.getElementById('visitors-container');
+    const $visitorsList = document.getElementById('visitors-list')
+
+    /* event listener for all buttons */
+    document.getElementById('test-ip-container').addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON') return;
+        sendRequest(e.target.id); // the id is the ip address
+    })
+
+
+    
+    
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB29pGpCzE_JGIEMLu1SGIqwoIbc0sHFHo&amp;callback=myMap"></script>
+</body>
+</html>
+
+
