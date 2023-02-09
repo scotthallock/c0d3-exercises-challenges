@@ -1,8 +1,8 @@
-/* set up express */
+/* Set up express */
 const express = require('express');
 const app = express();
 
-/* global variables */ 
+/* Global variables */ 
 const visitorInfo = []; // data to send when '/api/visitors' is requested
 const visitorIPs = []; // used to track new vs. repeat visitors
 const locFrequency = {}; // key: location | value: visitor count
@@ -16,21 +16,21 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-/* the HTML file includes a script which */
+/* The HTML file includes a script which */
 app.get('/visitors', (req, res) => {
     console.log('/visitors ouch', Date.now());
 
-    /* get the user's ip address */
+    /* Get the user's ip address */
     const clientIP = req.get('x-forwarded-for');
 
-    /* if the IP address is new, log new visitor information */
+    /* If the IP address is new, log new visitor information */
     let isNewVisitor = false;
     if (!visitorIPs.includes(clientIP)) {
         visitorIPs.push(clientIP);
         isNewVisitor = true;
     }
 
-    /* make a request to this c0d3's API to get location of user */
+    /* Make a request to this c0d3's API to get location of user */
     fetch(`https://js5.c0d3.com/location/api/ip/${clientIP}`)
         .then(res => res.json())
         .then(data => {
@@ -44,20 +44,20 @@ app.get('/visitors', (req, res) => {
                 });
             }
 
-            /* keep track of where the visitors come from */
+            /* Keep track of where the visitors come from */
             const loc = data.cityStr;
 
-            /* increment the visitor count from this location */
+            /* Increment the visitor count from this location */
             locFrequency[loc] = (locFrequency[loc] || 0) + 1;
 
-            /* create HTML to display vistor location frequency */
+            /* Create HTML to display vistor location frequency */
             const visitorsHTML = Object.keys(locFrequency).reduce((acc, loc) => {
                 return acc + `
                 <h3><a href="/city/${loc}">${loc} - ${locFrequency[loc]}</a></h3>
                 `
             }, '');
 
-            /* send data back to client */
+            /* Send data back to client */
             res.json({
                 location: data.cityStr, // city, region, country
                 lat: data.ll[0], // latitude
