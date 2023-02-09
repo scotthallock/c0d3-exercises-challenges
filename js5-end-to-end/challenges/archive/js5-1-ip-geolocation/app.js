@@ -1,11 +1,14 @@
-/* Set up express */
+/* Set up Express and EJS - embedded javascript templating */
 const express = require('express');
+const ejs = require('ejs');
 const app = express();
+app.set('view engine', 'ejs');
 
 /* Global variables */ 
 const visitorInfo = []; // data to send when '/api/visitors' is requested
 const visitorIPs = []; // used to track new vs. repeat visitors
 const locFrequency = {}; // key: location | value: visitor count
+let visitorsHTML = '';
 
 /**
  * Send the HTML file.
@@ -13,7 +16,15 @@ const locFrequency = {}; // key: location | value: visitor count
  * to get the user's location based of the client IP address.
  */
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    // res.sendFile(__dirname + '/index.html');
+    res.render('home', {
+        welcomeMessage: 'Hello!',
+        visitorsHTML: visitorsHTML,
+        buttonDisplay: 'true',
+        lat: '',
+        lng: ''
+
+    });
 });
 
 /* The HTML file includes a script which */
@@ -34,6 +45,7 @@ app.get('/visitors', (req, res) => {
     fetch(`https://js5.c0d3.com/location/api/ip/${clientIP}`)
         .then(res => res.json())
         .then(data => {
+            if (data.error) {} // do something if there is an error
             /* store the new visitor's information */
             if (isNewVisitor) {
                 visitorInfo.push({
@@ -44,6 +56,7 @@ app.get('/visitors', (req, res) => {
                 });
             }
 
+
             /* Keep track of where the visitors come from */
             const loc = data.cityStr;
 
@@ -51,18 +64,28 @@ app.get('/visitors', (req, res) => {
             locFrequency[loc] = (locFrequency[loc] || 0) + 1;
 
             /* Create HTML to display vistor location frequency */
-            const visitorsHTML = Object.keys(locFrequency).reduce((acc, loc) => {
+            visitorsHTML = Object.keys(locFrequency).reduce((acc, loc) => {
                 return acc + `
                 <h3><a href="/city/${loc}">${loc} - ${locFrequency[loc]}</a></h3>
                 `
             }, '');
 
+            console.log(visitorsHTML);
+
             /* Send data back to client */
-            res.json({
-                location: data.cityStr, // city, region, country
-                lat: data.ll[0], // latitude
-                lng: data.ll[1], // longitude 
-                visitorsHTML: visitorsHTML
+            // res.json({
+            //     location: data.cityStr, // city, region, country
+            //     lat: data.ll[0], // latitude
+            //     lng: data.ll[1], // longitude 
+            //     visitorsHTML: visitorsHTML
+            // });
+
+            res.render('home', {
+                welcomeMessage: `Welcome, user from ${data.cityStr}`,
+                visitorsHTML: visitorsHTML,
+                buttonDisplay: 'true',
+                lat: data.ll[0],
+                lng: data.ll[1]
             });
         })
 });
@@ -76,9 +99,15 @@ const visitCount = {};
 app.get('/city/:location', (req, res) => {
     const loc = req.params.location;
     visitCount[loc] = (visitCount[loc] || 0) + 1;
-    res.send(`
-    <h1>You are visiting the page for ${loc}<h1>
-    <h1>${visitCount[loc]} users have visited this page.</h1>`)
+    const num = visitCount[loc];
+    res.render('home', {
+        welcomeMessage: `This is the page for ${loc}. <br>
+            This page has been visited ${num + (num > 1 ? ' times!' : ' time!')}`,
+        visitorsHTML: visitorsHTML,
+        buttonDisplay: 'false',
+        lat: '',
+        lng: ''
+    });
 });
 
 
@@ -91,5 +120,6 @@ app.get('/api/visitors', (req, res) => {
 
 
 const port = 3333;
-app.listen(port);
-console.log(`Your server is running on http://localhost:${port}`);
+app.listen(port, () => {
+    console.log(`Your server is running on http://localhost:${port}`);
+});

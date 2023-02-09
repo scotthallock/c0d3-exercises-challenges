@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Geolocation</title>
+    <style>
+    h1, h2 {
+        margin: 0px
+    }
+    #main-container {
+        display: flex;
+        flex-direction: row;
+        height: 400px;
+    }
+    #map-container {
+        height: 100%;
+        width: 50%;
+    }
+    #visitors-container {
+        padding: 10px;
+        overflow: auto;
+    }
+    #test-container {
+        display: block;
+    }
+    #test-container.invisible {
+        display: none;
+    }
+    #test-ip-buttons {
+        padding: 5px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    </style>
+</head>
+<body>
+    <!-- EJS variable controls the welcome header text -->
+    <h1 id="welcome-header"><%-welcomeMessage%></h1>
+    <div id="main-container" style=>
+        <div id="map-container"></div>
+        <div id="visitors-container">
+            <h2>Where our visitors come from:</h2>
+            <!-- EJS variable controls the visitor frequency list -->
+            <div id="visitors-list"><%-visitorsHTML%></div>
+        </div>
+    </div>
+    <hr>
+    <div id="test-container">
+        <h2>Click a button to sent a request from a fake IP:</h2>
+        <div id="test-ip-buttons">
+            <button class="test-ip" id="54.119.40.180">54.119.40.180 (US)</button>
+            <button class="test-ip" id ="77.255.219.178">77.255.219.178 (Bydgoszcz, KP, PL)</button>
+            <button class="test-ip" id ="48.118.100.121">48.118.100.121 (US)</button>
+            <button class="test-ip" id ="79.224.62.158">79.224.62.158 (Wolnzach,  BY,  DE)</button>
+            <button class="test-ip" id ="39.18.45.108">39.18.45.108 (KR)</button>
+            <button class="test-ip" id ="68.121.207.168">68.121.207.168 (US)</button>
+            <button class="test-ip" id ="114.226.25.254">114.226.25.254 (Changzhou,  JS,  CN)</button>
+            <button class="test-ip" id ="186.100.224.124">186.100.224.124 (AR)</button>
+            <button class="test-ip" id ="89.59.10.239">89.59.10.239 (DE)</button>
+        </div>
+        <%- include('partials/buttons') %>
+    </div>
+
+    <script>
+    console.log('HELLO WORLD!')
+
+    
+
+    const sendRequest = (clientIP) => {
+        /* make a GET request with the x-forwarded-for header */
+        fetch('./visitors', {
+            method: 'GET',
+            headers: {
+                'x-forwarded-for': clientIP
+            }
+        }).then(res => {
+            console.log('we got a response...')
+        });
+            // .then(res => {
+            //     return res.json();
+            // })
+            // .then(data => {
+            //     $welcomeHeader.innerText = `Welcome, user from ${data.location}!`;
+            //     $visitorsList.innerHTML = data.visitorsHTML;
+            //     myMap(data.lat, data.lng);
+            // });
+    };
+
+
+
+    // function myMap(lat, lng) {
+    function myMap() {
+        const lat = parseFloat('<%=lat%>');
+        const lng = parseFloat('<%=lng%>');
+        console.log('myMap() was called')
+        console.log({lat, lng})
+        var mapProp = {
+            center: new google.maps.LatLng(lat || 41.8719, lng || -87.6589),
+            zoom: 11
+        };
+        var map = new google.maps.Map(document.getElementById('map-container'), mapProp);
+            
+        new google.maps.Marker({
+            position: {lat: lat || 41.8719, lng: lng || -87.6589},
+            map: map,
+            title: '52 Hits'
+        });
+
+    };
+
+
+    const $welcomeHeader = document.getElementById('welcome-header');
+    const $map = document.getElementById('map');
+    const $visitorsContainer = document.getElementById('visitors-container');
+    const $visitorsList = document.getElementById('visitors-list')
+    const $testContainer = document.getElementById('test-container');
+
+    /* event listener for all buttons */
+    document.getElementById('test-ip-buttons').addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON') return;
+        console.log('button clicked')
+        sendRequest(e.target.id); // the id is the ip address
+    });
+
+    /* hide the buttons on the /city/:location page */
+    const buttonDisplay = '<%= buttonDisplay %>';
+    if (buttonDisplay === 'false') {
+        $testContainer.classList.add('invisible');
+    }
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB29pGpCzE_JGIEMLu1SGIqwoIbc0sHFHo&amp;callback=myMap"></script>
+</body>
+</html>
+
+
