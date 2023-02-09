@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitors - IP Geolocation</title>
+    <!-- Include the 'styles' partial -->
+    <%- include('../partials/styles'); %> 
+</head>
+<body>
+    <h1>Welcome to the visitors page!</h1>
+    <a href="/">&#8592;Return to the home page.</a>
+    <div id="main-container">
+        <div id="map-container"></div>
+        <div id="visitors-container">
+            <h2>Our visitors come from:</h2>
+            <div id="visitors-list"></div>
+        </div>
+    </div>
+    <hr>
+    <div id="button-container">
+        <!-- Include the 'buttons' partial -->
+        <%- include('../partials/buttons'); %>
+    </div>
+    <script>
+        /* for testing purposes, send a request with a fake IP address */
+        const sendRequest = (clientIP) => {
+            fetch('./visitors', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-for': clientIP
+                }
+            }).catch((error) => {
+                return console.error(error)
+            });
+        }
+
+
+        document.getElementById('buttons-group').addEventListener('click', e => {
+            if (e.target.tagName !== 'BUTTON') return;
+            console.log('button click');
+            sendRequest(e.target.id); // id is the ip address
+        })
+    </script>
+</body>
+</html>
+
+

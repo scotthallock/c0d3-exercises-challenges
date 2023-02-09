@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City - IP Geolocation</title>
+    <!-- Include the 'styles' partial -->
+    <%- include('../partials/styles'); %> 
+</head>
+<body>
+    <h1><%= location %></h1>
+    <h1>There have been X visits to this page.</h1>
+    <a href="/visitors">&#8592;Return to the visitors page.</a>
+    <div id="main-container">
+        <div id="map-container"></div>
+        <div id="visitors-container">
+            <h2>Our visitors come from:</h2>
+            <div id="visitors-list"></div>
+        </div>
+    </div>
+    <hr>
+</body>
+</html>
