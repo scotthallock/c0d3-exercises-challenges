@@ -12,8 +12,6 @@ const locFrequency = {}; // key: location | value: visitor count
 const cityPageFrequency = {} // key: location | value: how many times the page has been visited
 let visitorsHTML = '';
 
-let dataToSend = {};
-
 /* Request for home page */
 app.get('/', (req, res) => {
     console.log('OUCH - home');
@@ -79,7 +77,7 @@ app.use('/visitors', jsonParser, (req, res, next) => {
             }, '');
 
             /* Package the important data to send back to client */
-            dataToSend = {
+            res.locals = {
                 location: loc,
                 lat: lat,
                 lng: lng,
@@ -97,14 +95,14 @@ app.use('/visitors', jsonParser, (req, res, next) => {
 /* (GET) Request for /visitors page */
 app.get('/visitors', (req, res) => {
     console.log('OUCH - visitors (GET) ', Date.now());
-    res.render('pages/visitors', dataToSend); // datatoSend has our EJS template variables
+    res.render('pages/visitors', res.locals); // datatoSend has our EJS template variables
 });
 
 
 /* (POST) Request for /visitors page (when user clicks a button) */
 app.post('/visitors', (req, res) => {
     console.log('OUCH - visitors (POST) ', Date.now());
-    res.json(dataToSend); // the client will parse this data and update the DOM
+    res.json(res.locals); // the client will parse this data and update the DOM
 });
 
 /* Request for /city page */
