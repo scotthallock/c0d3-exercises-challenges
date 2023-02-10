@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+        ** EJS variables used on this page: **
+        * location - string of user's city, region, country
+        * lat - coordinate for google maps
+        * lng - coordinate for google maps
+        * visitorsHTML - HTML string containing visitor frequencies and links to /city pages
+
+        ** EJS partials used on this page: **
+        * styles.ejs
+        * buttons.ejs
+    -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,13 +20,13 @@
     <%- include('../partials/styles'); %> 
 </head>
 <body>
-    <h1>Welcome to the visitors page!</h1>
+    <h1 id="welcome">Welcome, user from <%= location %>!</h1>
     <a href="/">&#8592;Return to the home page.</a>
     <div id="main-container">
         <div id="map-container"></div>
         <div id="visitors-container">
             <h2>Our visitors come from:</h2>
-            <div id="visitors-list"></div>
+            <div id="visitor-list"><%- visitorsHTML %></div>
         </div>
     </div>
     <hr>
@@ -23,19 +34,33 @@
         <!-- Include the 'buttons' partial -->
         <%- include('../partials/buttons'); %>
     </div>
+    <!-- Some <script> for the /visitor and /city/:location page are the same -->
+    <%- include('../partials/script'); %>
     <script>
-        /* for testing purposes, send a request with a fake IP address */
+        /* For testing purposes, send a request with a fake IP address */
+        /* Clicking a button will send a POST request to the server */
         const sendRequest = (clientIP) => {
             fetch('./visitors', {
-                method: 'GET',
+                method: 'POST',
                 headers: {
-                    'x-forwarded-for': clientIP
-                }
-            }).catch((error) => {
+                    'content-type': 'application/json'
+                }, 
+                body: JSON.stringify({
+                    ip: clientIP
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                /* Update welcome message and visitor list */
+                document.getElementById('welcome').innerText = `Welcome, (simulated) user from ${data.location}!`
+                document.getElementById('visitor-list').innerHTML = data.visitorsHTML;
+                /* Update google map */
+                myMap(data.lat, data.lng);
+            })
+            .catch((error) => {
                 return console.error(error)
             });
         }
-
 
         document.getElementById('buttons-group').addEventListener('click', e => {
             if (e.target.tagName !== 'BUTTON') return;

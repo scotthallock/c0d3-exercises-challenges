@@ -1,0 +1,32 @@
+<script>
+    /**
+     * Using EJS variables in the script:
+     * This code /works/ ...
+     *   const latFromGET = <%= lat %>
+     * ... but it is linted red and that's annoying.
+     * That is why I wrap the EJS template in single quotes,
+     * and call parseFloat on it.
+     */
+    const latFromGET = parseFloat('<%= lat %>');
+    const lngFromGET = parseFloat('<%= lng %>');
+
+    /* Render the Google map at the the location of the user */
+    /* Cannot change this to arrow function or it will break */
+    function myMap(lat = latFromGET, lng = lngFromGET) {
+        console.log('called mymap with:', lat, lng)
+        var mapProp= {
+            center: new google.maps.LatLng(lat, lng),
+            zoom: 11
+        };
+        var map = new google.maps.Map(document.getElementById("map-container"), mapProp);
+        
+        new google.maps.Marker({
+            position: {lat, lng},
+            map: map,
+            title: '' // what does this do?
+        })  
+    }
+
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB29pGpCzE_JGIEMLu1SGIqwoIbc0sHFHo&amp;callback=myMap"></script>

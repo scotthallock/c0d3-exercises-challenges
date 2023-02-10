@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+        ** EJS variables used on this page: **
+        * location - string of user's city, region, country
+        * pageVisitCount 
+        * lat - coordinate for google maps
+        * lng - coordinate for google maps
+        * visitorsHTML - HTML string containing visitor frequencies and links to /city pages
+
+        ** EJS partials used on this page: **
+        * styles.ejs
+        * buttons.ejs
+    -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,16 +21,20 @@
     <%- include('../partials/styles'); %> 
 </head>
 <body>
-    <h1><%= location %></h1>
-    <h1>There have been X visits to this page.</h1>
+    <h1 id="welcome">You are visiting the page for <%= location %>!</h1>
+    <h1 id="welcome">This page has been visited <%= pageVisitCount %> times!</h1>
     <a href="/visitors">&#8592;Return to the visitors page.</a>
     <div id="main-container">
         <div id="map-container"></div>
         <div id="visitors-container">
             <h2>Our visitors come from:</h2>
-            <div id="visitors-list"></div>
+            <div id="visitor-list"><%- visitorsHTML %></div>
         </div>
     </div>
     <hr>
+    <!-- The <script> for the /visitor and /city/:location page are the same -->
+    <%- include('../partials/script'); %>
 </body>
 </html>
+
+
