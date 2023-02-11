@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            font: Helvetica, Arial, sans-serif;
+        }
+        body {
+            margin: auto;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-content: center;
+            gap: 10px;
+        }
+        #directions-container {
+            width: 100%;
+        }
+        #output-container {
+            overflow: auto;
+            width: 100%;
+            background-color: lightblue;
+        }
+        #input-container {
+            overflow: auto;
+            width: 100%;
+        }
+        #input-field {
+            width: 90%;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Commands</h1>
+    </div>
+    <div id="directions-container">
+        <p>Type a command to execute it on the working directory of the server. Only the following commands are allowed:</p>
+        <ul>
+            <li><code>ls</code></li>
+            <li><code>cat</code></li>
+            <li><code>pwd</code></li>
+        </ul>
+    </div>
+    <div id="output-container">
+        <p>This is where the output will go.</p>
+    </div>
+    <div id="input-container">
+        <input id="input-field" type="text" placeholder="type a command here, press [enter] to execute"/>
+    </div>
+    <script>
+        /* user press enter, send command to server */
+        document.getElementById('input-field').addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            const command = e.target.value;
+            e.target.value = '';
+            
+            /* make POST request to server, passing the command in the body */
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    command: command
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+            })
+        });
+
+    </script>
+</body>
+</html>
