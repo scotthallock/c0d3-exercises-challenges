@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Commands</title>
     <style>
         * {
             margin: 0;
@@ -14,6 +14,7 @@
         body {
             background: linear-gradient(to top, #F29492, #114357);
             height: 100vh;
+            min-height: 700px;
         }
         #output-container {
             position: relative;
@@ -37,8 +38,8 @@
             height: 370px;
             border-radius: 5px 5px 0 0;
             background: linear-gradient(to top, #020202, #171717);
-            overflow: auto;
-
+            overflow-y: auto; /* only allow y-axis scrolling */
+            overflow-x: hidden;
             display: flex;
             flex-direction: column-reverse;
         }
@@ -51,7 +52,7 @@
             width: 450px;
             border: none;
             background-color: #010101;
-            color: #FFF;
+            color: yellow;
         }
         #input-field:focus {
             outline: none;
@@ -66,9 +67,8 @@
     <script>
         const $inputField = document.getElementById('input-field');
         const $outputField = document.getElementById('output-field');
-
         const $titleScreen = document.createElement('span');
-        $titleScreen.style = "color: #FFFFFF";
+        $titleScreen.style = "color: white";
         $titleScreen.innerText = `
 ****************************
 * ┌─┐┌─┐┌┬┐┌┬┐┌─┐┌┐┌┌┬┐┌─┐ *
@@ -97,7 +97,7 @@
             e.target.value = '';
             
             /* make POST request to server, passing the command in the body */
-            fetch('/commands', {
+            fetch('/', {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json'
@@ -110,12 +110,12 @@
             .then(data => {
                 /* the user's command will be colored yellow */
                 const $command = document.createElement('span');
-                $command.style = 'color: #FFFF00';
+                $command.style = 'color: yellow';
                 $command.innerText = command.trim();
                 /* the output will be colored white or red */
                 const $output = document.createElement('span');
                 $output.style = `color: ${data.color}`;
-                $output.innerText = data.message;
+                $output.innerText = `${data.message}`;
                 /* add to display */
                 $outputField.prepend($command);
                 $outputField.prepend($output);
