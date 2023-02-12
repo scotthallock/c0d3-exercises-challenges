@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 const jsonParser = require('body-parser').json();
 const child_process = require('child_process');
-const { stderr } = require('process');
 
 /* Serve static files (such as images) */
 app.use(express.static(__dirname + '/'));
@@ -39,10 +38,11 @@ app.post('/', jsonParser, (req, res) => {
         });
     }
     
+    /* create child process */
     const child = child_process.spawn(command, options);
 
+    /* listeners for child process */
     child.stdout.on('data', data => {
-        console.log('stdout ', data.toString());
         return res.json({
             color: white,
             message: data.toString()
@@ -50,7 +50,6 @@ app.post('/', jsonParser, (req, res) => {
     });
       
     child.stderr.on('data', data => {
-        console.log('stderr ', stderr.toString());
         return res.json({
             color: red,
             message: data.toString()
@@ -58,7 +57,6 @@ app.post('/', jsonParser, (req, res) => {
     });
 
     child.on('error', error => {
-        console.log('error ', error.message);
         return res.json({
             color: red,
             message: error.message

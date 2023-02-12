@@ -70,11 +70,15 @@
         const $titleScreen = document.createElement('span');
         $titleScreen.style = "color: #FFFFFF";
         $titleScreen.innerText = `
-------------------------
-┌─┐┌─┐┌┬┐┌┬┐┌─┐┌┐┌┌┬┐┌─┐
-│  │ │││││││├─┤│││ ││└─┐
-└─┘└─┘┴ ┴┴ ┴┴ ┴┘└┘─┴┘└─┘
-------------------------
+****************************
+* ┌─┐┌─┐┌┬┐┌┬┐┌─┐┌┐┌┌┬┐┌─┐ *
+* │  │ │││││││├─┤│││ ││└─┐ *
+* └─┘└─┘┴ ┴┴ ┴┴ ┴┘└┘─┴┘└─┘ *
+****************************
+
+┌┬┐┬─┐┬ ┬  ┌─┐┌┐┌┌─┐
+ │ ├┬┘└┬┘  │ ││││├┤ 
+ ┴ ┴└─ ┴   └─┘┘└┘└─┘  *  *  *
 
 ┌─┐┌─┐┌┬┐   /  ┬  ┌─┐    /  ┌─┐┬ ┬┌┬┐    /
 │  ├─┤ │   /   │  └─┐   /   ├─┘│││ ││   /
@@ -93,7 +97,7 @@
             e.target.value = '';
             
             /* make POST request to server, passing the command in the body */
-            fetch('/', {
+            fetch('/commands', {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json'
