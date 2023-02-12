@@ -4,7 +4,7 @@ const jsonParser = require('body-parser').json();
 const child_process = require('child_process');
 
 /* Serve static files (such as images) */
-app.use(express.static(__dirname + '/views/commands'));
+app.use(express.static(__dirname + '/'));
 
 /* Serve the home page */
 app.get('/', (req, res) => {
