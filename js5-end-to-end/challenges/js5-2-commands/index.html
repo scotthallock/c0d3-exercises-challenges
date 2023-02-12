@@ -7,55 +7,87 @@
     <title>Document</title>
     <style>
         * {
-            font: Helvetica, Arial, sans-serif;
+            margin: 0;
+            box-sizing: border-box;
+            font: 14px Lucida, 'Courier New', monospace; 
         }
         body {
-            margin: auto;
-            width: 400px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-content: center;
-            gap: 10px;
-        }
-        #directions-container {
-            width: 100%;
+            background: linear-gradient(to top, #F29492, #114357);
+            height: 100vh;
         }
         #output-container {
-            overflow: auto;
-            width: 100%;
-            background-color: lightblue;
+            position: relative;
+            margin: 30px auto;
+            height: 700px;
+            min-width: 700px;
+            background-image: url(img/monitor.png);
+            background-repeat: no-repeat;
+            background-position-x: center;
+            background-position-y: top;
+            background-size: contain;
+            white-space: pre-wrap;
         }
-        #input-container {
+        #output-field {
+            position: absolute;
+            margin: auto;
+            top: 80px;
+            left: 0;
+            right: 0;
+            width: 450px;
+            height: 370px;
+            border-radius: 5px 5px 0 0;
+            background: linear-gradient(to top, #020202, #171717);
             overflow: auto;
-            width: 100%;
+
+            display: flex;
+            flex-direction: column-reverse;
         }
         #input-field {
-            width: 90%;
+            position: absolute;
+            margin: auto;
+            top: 460px;
+            left: 0;
+            right: 0;
+            width: 450px;
+            border: none;
+            background-color: #010101;
+            color: #FFF;
+        }
+        #input-field:focus {
+            outline: none;
         }
     </style>
 </head>
 <body>
-    <div>
-        <h1>Commands</h1>
-    </div>
-    <div id="directions-container">
-        <p>Type a command to execute it on the working directory of the server. Only the following commands are allowed:</p>
-        <ul>
-            <li><code>ls</code></li>
-            <li><code>cat</code></li>
-            <li><code>pwd</code></li>
-        </ul>
-    </div>
     <div id="output-container">
-        <p>This is where the output will go.</p>
-    </div>
-    <div id="input-container">
+        <div id="output-field"></div>
         <input id="input-field" type="text" placeholder="type a command here, press [enter] to execute"/>
     </div>
     <script>
+        const $inputField = document.getElementById('input-field');
+        const $outputField = document.getElementById('output-field');
+
+        const $titleScreen = document.createElement('span');
+        $titleScreen.style = "color: #FFFFFF";
+        $titleScreen.innerText = `
+------------------------
+┌─┐┌─┐┌┬┐┌┬┐┌─┐┌┐┌┌┬┐┌─┐
+│  │ │││││││├─┤│││ ││└─┐
+└─┘└─┘┴ ┴┴ ┴┴ ┴┘└┘─┴┘└─┘
+------------------------
+
+┌─┐┌─┐┌┬┐   /  ┬  ┌─┐    /  ┌─┐┬ ┬┌┬┐    /
+│  ├─┤ │   /   │  └─┐   /   ├─┘│││ ││   /
+└─┘┴ ┴ ┴  /    ┴─┘└─┘  /    ┴  └┴┘─┴┘  / 
+
+┌─┐┬┌┬┐  ┌─┐┌┬┐┌─┐┌┬┐┬ ┬┌─┐
+│ ┬│ │   └─┐ │ ├─┤ │ │ │└─┐
+└─┘┴ ┴   └─┘ ┴ ┴ ┴ ┴ └─┘└─┘
+`;
+        $outputField.prepend($titleScreen);
+
         /* user press enter, send command to server */
-        document.getElementById('input-field').addEventListener('keydown', e => {
+        $inputField.addEventListener('keydown', e => {
             if (e.key !== 'Enter') return;
             const command = e.target.value;
             e.target.value = '';
@@ -72,10 +104,19 @@
             })
             .then(res => res.json())
             .then(data => {
-                console.log(data);
+                /* the user's command will be colored yellow */
+                const $command = document.createElement('span');
+                $command.style = 'color: #FFFF00';
+                $command.innerText = command.trim();
+                /* the output will be colored white or red */
+                const $output = document.createElement('span');
+                $output.style = `color: ${data.color}`;
+                $output.innerText = data.message;
+                /* add to display */
+                $outputField.prepend($command);
+                $outputField.prepend($output);
             })
         });
-
     </script>
 </body>
 </html>
