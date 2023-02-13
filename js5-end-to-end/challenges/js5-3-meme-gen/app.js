@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
 const cache = new Map();
 const cacheMemes = (key, value) => {
     cache.set(key, value);
-    if (cache.size > 3) {
+    if (cache.size > 10) {
         cache.delete(cache.keys().next().value);
     }
 };
