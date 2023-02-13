@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Gen</title>
+    <style>
+        h1 {
+            margin: 0;
+            color: white;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: linear-gradient(90deg, #FC466B 0%, #3F5EFB 100%);
+            width: 400px;
+            margin: 70px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+
+        }
+        #form {
+            padding: 10px;
+            background-color: #DDD;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #link-to-meme {
+            display: block;
+            max-width: 400px;
+            word-wrap: break-word;
+        }
+        a {
+            color: #3F5EFB;
+        }
+        #generate {
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            display: inline-block;
+            padding: 10px;
+            align-self: center;
+            background-color: #FC466B
+        }
+        #generate:hover {
+            cursor: pointer;
+            background-color: #BF3450;
+        }
+        #image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #loading {
+            display: none;
+        }
+        #loading.visible {
+            display: block;
+        }
+        #bad-request-message {
+            display: none;
+            color: white;
+            font-size: 18px;
+        }
+        #bad-request-message.visible {
+            display: block;
+        }
+        #ball {
+            background-color: white;
+            width: 10px;
+            height: 10px;
+            margin: 10px auto;
+            border-radius: 50px;
+            animation: waver 1s infinite ease-in-out;
+        }
+        @keyframes waver {
+            0% { transform: translate(-15px); }
+            50% { transform: translate(15px); }
+            100% { transform: translate(-15px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Meme Gen</h1>
+    <form id="form">
+        <label for="image-url">Image url (leave blank for random):</label>
+        <input type="url" id="input-image-url" name="image-url" value="https://placekitten.com/640/480"/>
+        <label for="caption">Caption:</label>
+        <input type="text" id="input-caption" name="caption" value="mfw no cereal"/>
+        <div>
+            <label for="black-text">Black text (default white):</label>
+            <input type="checkbox" id="input-black-text" name="black-text"/>
+        </div>
+        <div>
+            <label for="blur">Blur amount (pixels):</label>
+            <input type="number" id="input-blur" name="blur" step="1" min="0" max="10" value="2"/>
+        </div>
+        <span>Follow this link or click <i>Generate Meme</i>:</span>
+        <a id="link-to-meme" href=""></a>
+        <button id="generate" type="button">Generate Meme</button>
+
+    </form>
+    <div id="image-container">
+        <div id="loading">
+            <div id="ball"></div>
+        </div>
+        <div id="bad-request-message">Bad Request - cannot generate meme.</div> 
+        <img id="meme" src=""/>
+    </div>
+    <script>
+        /* Get DOM elements */
+        const $inputCaption = document.getElementById('input-caption');
+        const $inputBlackText = document.getElementById('input-black-text');
+        const $inputImageUrl = document.getElementById('input-image-url');
+        const $inputBlur = document.getElementById('input-blur');
+        const $linkToMeme = document.getElementById('link-to-meme');
+        const $loadingAnimation = document.getElementById('loading');
+        const $badRequestMessage = document.getElementById('bad-request-message');
+
+        /* Returns a path based on form inputs */
+        const generatePath = () => {
+            return encodeURI(
+                `/memegen/api/${$inputCaption.value || ' '}` + 
+                `?blur=${$inputBlur.value}` +
+                `&black=${$inputBlackText.checked}` +
+                `&src=${$inputImageUrl.value}`
+                );
+        };
+        
+        /* Update the link to view the generated meme */
+        const updateLink = () => {
+            const path = generatePath();
+            $linkToMeme.href = path;
+            $linkToMeme.innerText = path;
+        };
+        updateLink();
+
+        /* User changes a form field -> update link */
+        document.getElementById('form').addEventListener('change', updateLink);
+        $inputCaption.addEventListener('keydown', updateLink);
+        $inputImageUrl.addEventListener('keydown', updateLink);
+
+        /* User clicks 'Generate Meme' button */
+        document.getElementById('generate').addEventListener('click', () => {
+            /* Show loading animation, hide bad request message */
+            $loadingAnimation.classList.add('visible');
+            $badRequestMessage.classList.remove('visible');
+            /* Make a request to the server to generate the image */
+            fetch(generatePath())
+                .then(res => {
+                    if (res.status >= 400) {
+                        $badRequestMessage.classList.add('visible');
+                        throw new Error('Bad Request - cannot generate meme.')
+                    }
+                    return res.arrayBuffer()
+                })
+                .then(arrayBuffer => {
+                    /* Render the meme image */
+                    const blob = new Blob([arrayBuffer], {type: "image/jpeg"});
+                    document.getElementById('meme').src = URL.createObjectURL(blob);
+                })
+                .catch(err => {
+                    console.error(err);
+                })
+                .then(() => {
+                    /* Hide loading animation */
+                    $loadingAnimation.classList.remove('visible');
+                });
+        });
+    </script>
+</body>
+</html>
