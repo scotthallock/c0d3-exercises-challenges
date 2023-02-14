@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Asset Creation</title>
+	<style>
+		:root {
+			--color-bg: #ebebeb;
+			--color-1: #4caf50;
+			--color-2: #2a742d;
+		}
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+		body {
+			background-color: var(--color-bg);
+		}
+		h1 {
+			display: block;
+			padding: 10px;
+			text-align: center;
+			font: 20px Arial, sans-serif;
+		}
+		.label {
+			font: 16px Arial, sans-serif;
+			padding: 5px;
+		}
+		#new-file-filename {
+			padding: 5px;
+		}
+		#main-container{
+			display: flex;
+			flex-direction: row;
+			align-content: center;
+			justify-content: center;
+			gap: 10px;
+		}
+		.button { /* remove default button styles */
+			border: none;
+			padding: 5px 10px;
+			text-align: center;
+			text-decoration: none;
+			border: none;
+			display: inline-block;
+			font-size: 16px;
+			background-color: var(--color-1);
+			color: white;
+		}
+		.button:hover {
+			cursor: pointer;
+			background-color: var(--color-2);
+		}
+		#save-button {
+			float: right;
+		}
+		#left-container {
+			width: 200px;
+			height: 800px;
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+		}
+		#file-list {
+			flex-grow: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			overflow: auto;
+			overflow-x: hidden;
+			font: 16px Arial, sans-serif;
+		}
+		.file-list-item {
+			list-style: none;
+			background-color: var(--color-1);
+			color: white;
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+		}
+		.file {
+			flex-grow: 1;
+			text-align: left;
+		}
+	    #editor-container { 
+			width: 800px;
+			height: 800px;
+			display: flex;
+			flex-direction: column;
+		}
+		#editor-top {
+			display: flex;
+			flex-direction: row;
+			align-items: flex-end;
+			gap: 10px;
+		}
+		#editor {
+			flex-grow: 1;
+		}
+		#current-file {
+			padding: 5px 10px;
+			border: none;
+		}
+	</style>
+</head>
+<body>
+	<h1>Code Editor - files saved on server</h1>
+	<div id="main-container">
+		<div id="left-container">
+			<ul id="file-list">
+				<!-- <li class="file-list-item"><a class="file button" href="">File1</a><i class="fa-solid fa-download button"></i></li>
+				<li class="file-list-item"><a class="file button" href="">File2</a><i class="fa-solid fa-download button"></i></li>
+				<li class="file-list-item"><a class="file button" href="">File3</a><i class="fa-solid fa-download button"></i></li>
+				<li class="file-list-item"><a class="file button" href="">File4</a><i class="fa-solid fa-download button"></i></li> -->
+			</ul>
+		</div>
+
+		<div id="editor-container">
+			<div id="editor-top">
+				<button id="new-file-button" class="button" type="button"><i class="fa-solid fa-plus"></i> New File</button>
+				<button id="save-button" class="button" type="button"><i class="fa-regular fa-floppy-disk"></i> Save File</button>
+				<input type="text" id="current-file" class="label" placeholder="filename">
+			</div>
+			<div id="editor">const x = (item) => { console.log(item) };</div>
+		</div>
+	</div>
+
+	<script src="https://kit.fontawesome.com/4f647682c3.js" crossorigin="anonymous"></script>
+	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ext-modelist.js" type="text/javascript" charset="utf-8"></script>
+	<script>
+		/* Set up Ace editor */
+		const editor = ace.edit("editor");
+		editor.setTheme("ace/theme/monokai");
+		editor.session.setMode("ace/mode/javascript");
+
+		/* Get DOM elements */
+		const $newFileButton = document.getElementById('new-file-button');
+		const $saveButton = document.getElementById('save-button');
+		const $currentFile = document.getElementById('current-file');
+		const $fileList = document.getElementById('file-list');
+
+
+		/* */
+		const findGetParameter = (parameterName) => {
+			const result = location.search.substr(1).split("&").find((item) => {
+				return item.split("=")[0] === parameterName;
+			});
+			if (!result) return null;
+			return decodeURIComponent(result.split('=')[1]);
+		};
+
+		/* Save file */
+		$saveButton.addEventListener('click', () => {
+			console.log('clicked save button');
+			const filename = $currentFile.value;
+			const content = editor.getValue();
+			fetch('/api/files', {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json'
+				},
+				body: JSON.stringify({
+					filename,
+					content
+				})
+			}).then(res => {
+				console.log(res);
+				console.log('gonna reload...')
+				window.location.reload();
+			}).catch(err => {
+				console.error(err);
+			});
+		});
+
+		const initialFilename = findGetParameter('file');
+		console.log({initialFilename});
+		if (initialFilename) {
+			fetch(`/api/files/${initialFilename}`)
+				.then(res => res.json())
+				.then(data => {
+					console.log(data);
+					editor.setValue(data);
+					$currentFile.value = initialFilename;
+					/* set the syntax highlighting based on file extension */
+					const modelist = ace.require('ace/ext/modelist');
+					editor.session.setMode(modelist.getModeForPath(initialFilename).mode);
+				})
+				.catch(err => {
+					console.error(err);
+				});
+		}
+
+		/* Constructor function that creates DOM elements for files in the file list */
+		function File(filename) {
+			this.filename = filename;
+			const $element = document.createElement('li');
+			$element.innerHTML = `
+			<li class="file-list-item">
+				<a class="file button" href="?file=${filename}">${filename}</a>
+				<i class="fa-solid fa-download button"></i>
+			</li>`;
+			$fileList.append($element);
+			const $openButton = $element.querySelector('.fa-download')
+			$openButton.addEventListener('click', () => {
+				fetch(`/api/files/${filename}`)
+					.then(res => res.json())
+					.then(data => {
+						/* Open a new window/tab to show the file content */
+						const wnd = window.open('about:blank', '_blank');
+						/* Wrapping in <pre> tags preserves white space and line breaks */
+						wnd.document.write(`<h3><pre>${filename}</pre></h3><pre>${data}</pre>`);
+						wnd.document.close();
+					})
+			});
+		};
+
+		/* Get files in server */
+		let allFiles;
+		fetch('/api/files')
+			.then(res => res.json())
+			.then(data => {
+				allFiles = data.map(e => new File(e));
+				console.log(allFiles);
+			})
+			.catch(err => {
+				console.error(err);
+			});
+
+
+
+	</script>
+</body>
+</html>
