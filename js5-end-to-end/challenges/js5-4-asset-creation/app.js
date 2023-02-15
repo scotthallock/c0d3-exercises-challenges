@@ -53,7 +53,7 @@ app.post('/api/files', jsonParser, async (req, res) => {
 app.get('/api/files/:filename', async (req, res) => {
     try {
         const data = await fs.promises.readFile(
-            `./files/${req.params.filename}`,
+            `${dir}/${req.params.filename}`,
              'utf8'
         );
         res.status(200).json(data);
@@ -65,7 +65,7 @@ app.get('/api/files/:filename', async (req, res) => {
 /* Request handler - get all filenames in the /files folder. */
 app.get('/api/files', async (req, res) => {
     try {
-        const files = await fs.promises.readdir('./files');
+        const files = await fs.promises.readdir(dir);
         res.status(200).json(files);
     } catch (err) {
         res.status(500).send(err);
