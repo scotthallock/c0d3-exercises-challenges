@@ -1,0 +1,207 @@
+<script>
+    const renderSelection = () => {
+        $appContainer.innerHTML = `
+      <h1>Enter Room Name</h1>
+      <input class="roomname" type="text">
+      <button class="submit">Submit</button>
+    `;
+        const $roomname = document.querySelector(".roomname");
+        const $submit = document.querySelector(".submit");
+        $submit.addEventListener("click", () => {
+            const name = $roomname.value;
+            window.location = `/chatroom/${name}`;
+        });
+    };
+
+    const renderRoom = () => {
+        const roomName = window.location.pathname.split("/")[2];
+        $appContainer.innerHTML = `
+  <h1>Chatroom: ${roomName}</h1>
+  <style>
+  .name {
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 5px;
+  }
+  </style>
+  <input class="message" type="text">
+  <hr />
+  <div class="container"></div>
+    `;
+        const $message = document.querySelector(".message");
+        const $container = document.querySelector(".container");
+        $message.focus();
+
+        const sendMessage = () => {
+            const room = window.location.pathname.split("/")[2];
+            const value = $message.value;
+            fetch(`/chatroom/api/${room}/messages`, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                    Authorization: `Bearer ${jwtToken}`,
+                },
+                body: JSON.stringify({
+                    message: value,
+                }),
+            }).then(() => {
+                $message.value = "";
+            });
+        };
+        const getMessage = () => {
+            const room = window.location.pathname.split("/")[2];
+            fetch(`/chatroom/api/${room}/messages`, {
+                headers: {
+                    Authorization: `Bearer ${jwtToken}`,
+                },
+            })
+                .then((r) => r.json())
+                .then((data) => {
+                    $container.innerHTML = data.reduce((acc, e) => {
+                        return (
+                            acc +
+                            '<div><span class="name">' +
+                            e.name +
+                            "</span>" +
+                            e.message +
+                            "</div>"
+                        );
+                    }, "");
+                    setTimeout(() => {
+                        getMessage();
+                    }, 500);
+                });
+        };
+        getMessage();
+        $message.addEventListener("keyup", (e) => {
+            if (e.key === "Enter") {
+                return sendMessage();
+            }
+        });
+    };
+
+    const render = () => {
+        const room = window.location.pathname.split("/")[2];
+        if (!room) {
+            return renderSelection();
+        }
+        return renderRoom();
+    };
+
+    const setupLogin = () => {
+        $appContainer.innerHTML = `
+      <h1>You must be logged in</h1>
+      <p> No Account? You can
+        <a href="#" class="instead">Sign up instead</a>
+      </p>
+      <input class="username" type="text" placeholder="username">
+      <input class="password" type="password" placeholder="password">
+      <button class="submit">Submit</button>
+    `;
+        const $username = document.querySelector(".username");
+        const $password = document.querySelector(".password");
+        const $instead = document.querySelector(".instead");
+        const $submit = document.querySelector(".submit");
+        $instead.addEventListener("click", () => {
+            setupSignup();
+        });
+        $submit.addEventListener("click", () => {
+            // Login button click
+        fetch("https://js5.c0d3.com/auth/api/sessions", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "content-type": "application/json",
+            },
+            body: JSON.stringify({
+                username: $username.value,
+                password: btoa($password.value),
+            }),
+        })
+            .then((response) => {
+                return response.json();
+            })
+            .then((body) => {
+                if (body.jwt && body.username) {
+                    globalUsername = body.username;
+                    jwtToken = body.jwt;
+                    localStorage.setItem("userjwt", body.jwt);
+                    render();
+                }
+            });
+        });
+    };
+
+    const setupSignup = () => {
+        $appContainer.innerHTML = `
+      <h1>New Account!</h1>
+      <p> Already have an account? You can
+        <a href="#" class="instead">Login instead</a>
+      </p>
+      <input class="name" type="text" placeholder="full name">
+      <input class="username" type="text" placeholder="username">
+      <input class="email" type="email" placeholder="email">
+      <input class="password" type="password" placeholder="password">
+      <button class="submit">Submit</button>
+    `;
+        const $username = document.querySelector(".username");
+        const $email = document.querySelector(".email");
+        const $name = document.querySelector(".name");
+        const $password = document.querySelector(".password");
+        const $instead = document.querySelector(".instead");
+        const $submit = document.querySelector(".submit");
+        $instead.addEventListener("click", () => {
+            setupLogin();
+        });
+        $submit.addEventListener("click", () => {
+            // signup button click
+            fetch("https://js5.c0d3.com/auth/api/users", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                    username: $username.value,
+                    email: $email.value,
+                    name: $name.value,
+                    password: btoa($password.value),
+                }),
+            })
+            .then((response) => {
+                return response.json();
+            })
+            .then((body) => {
+                if (body.jwt && body.username) {
+                    globalUsername = body.username;
+                    jwtToken = body.jwt;
+                    localStorage.setItem("userjwt", body.jwt);
+                    render();
+                }
+            });
+        });
+    };
+
+    const $appContainer = document.querySelector(".app-container");
+    let jwtToken = localStorage.getItem("userjwt");
+
+    const startApp = () => {
+        console.log("hi");
+        fetch("/chatroom/api/session", {
+            headers: {
+                Authorization: `Bearer ${jwtToken}`,
+            },
+        })
+            .then((r) => {
+                return r.json();
+            })
+            .then((body) => {
+                if (body.username) {
+                    globalUsername = body.username;
+                    return render();
+                }
+                return setupLogin();
+            });
+    };
+    startApp();
+</script>
