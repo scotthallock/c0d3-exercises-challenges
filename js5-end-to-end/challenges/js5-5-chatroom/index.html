@@ -15,6 +15,201 @@
     </style>
 </head>
 <body>
-    <h1>Let's get chatting.</h1>
+    <main>
+        <div class="app-container"></div>
+    </main>
+    
+    <!--Select a chatroom or create a new one-->
+    <h1>Chat rooms</h1>
+    <div class="create-new-room">
+        <input class="chatroom-name" type="text" placeholder="chatroom name"><br>
+        <input class="chartoom-description" type="text" placeholder="chatroom description"><br>
+        <button class="submit">Create Room</button>
+    </div>
+    <br>
+    <div class="chatrooms">
+        <a class="enter-chatroom" href="">
+            Chatroom 1 name <br>
+            Chatroom 1 description
+        </a><br><br>
+        <a class="enter-chatroom" href="">
+            Chatroom 2 name  <br>
+            Chatroom 2 description
+        </a><br><br>
+        <a class="enter-chatroom" href="">
+            Chatroom 3 name  <br>
+            Chatroom 3 description
+        </a><br>
+    </div>
+    
+    <hr>
+    <!--Chatroom-->
+    <h1>Cat Facts</h1>
+    <h2>A place to share feline trivia</h2>
+    <a class="go-back" href="">Go back to chat rooms</a>
+    <br>
+    <div class="chat">
+        <input class="new-message" type="text" placeholder="new message">
+        <div class="message-history">
+            <span class="message">User 1: hey hi hello</span><br>
+            <span class="message">User 2: whats up dudes</span><br>
+            <span class="message">User 3: i'm hungry</span><br>
+        </div>
+    </div>
+
+
+    <script>
+        /* Render the log-in form */
+        const setupLogin = () => {
+            $appContainer.innerHTML = `
+                <!--Sign in-->
+                <h1>You must be logged in</h1>
+                <p>No account? You can 
+                    <a href="#" class="instead">Sign up instead</a>
+                </p><br>
+                <input class="username" type="text" placeholder="username"><br>
+                <input class="password" type="password" placeholder="password"><br>
+                <button class="submit">Log In</button><br>
+                <span class="alert">This is an alert message.</span><br>
+            `;
+            const $instead = document.querySelector('.instead');
+            const $username = document.querySelector('.username');
+            const $password = document.querySelector('.password');
+            const $submit = document.querySelector('.submit');
+
+            $instead.addEventListener('click', setupSignup);
+            $submit.addEventListener('click', () => {
+                /* The server will check if the fields are filled out correctly */
+                fetch('/auth/api/session', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: $username.value,
+                        password: btoa($password.value) // encrypt password
+                    })
+                })
+                .then(res => res.json())
+                .then(body => {
+                    if (body.jwt && body.username) {
+                        jwtToken = body.jwt;
+                        globalUsername = body.username;
+                        localStorage.setItem('userjwt', jwtToken);
+                        render();
+                    }
+                })
+                .catch(err => {
+                    /* Tell the user what went wrong when logging in */
+                    console.error(err);
+                });
+            });
+        };
+
+        /* Render the sign-up form */
+        const setupSignup = () => {
+            $appContainer.innerHTML = `
+                <!--Create an account-->
+                <h1>Create a new account</h1>
+                <p>Already have one? You can 
+                    <a href="#" class="instead">Login instead</a>
+                </p><br>
+                <input class="name" type="text" placeholder="full name"><br>
+                <input class="username" type="text" placeholder="username"><br>
+                <input class="email" type="email" placeholder="email"><br>
+                <input class="password" type="password" placeholder="password"><br>
+                <button class="submit">Create Account</button><br>
+                <span class="alert">This is an alert message.</span>
+            `;
+            const $instead = document.querySelector(".instead");
+            const $name = document.querySelector(".name");
+            const $username = document.querySelector(".username");
+            const $email = document.querySelector(".email");
+            const $password = document.querySelector(".password");
+            const $submit = document.querySelector(".submit");
+            
+            $instead.addEventListener('click', setupLogin);
+            $submit.addEventListener('click', () => {
+                /* The server will check if the fields are filled out correctly */
+                fetch('/auth/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: $name.value,
+                        username: $username.value,
+                        email: $email.value,
+                        password: btoa($password.value)
+                    })
+                })
+                    .then(res => res.json())
+                    .then(body => {
+                        if (body.jwt && body.username) {
+                            jwtToken = body.jwt;
+                            globalUsername = body.username;
+                            localStorage.setItem('userjwt', jwtToken);
+                            render();
+                        }
+                    })
+                    .catch(err => {
+                        /* Tell the user what went wrong when signing up */
+                        console.error(err);
+                    });
+            });
+
+        };
+
+        /* Enter a chatroom or let the user select one to join. */
+        const render = () => {
+            /* If URL is 'http://www.mydomain.com/chatroom/myroom' */
+            /* Then location.pathname is '/chatroom/myroom' */
+            const room = window.location.pathname.split('/')[2];
+            if (!room) {
+                return renderSelectChatroom();
+            }
+            return renderChatroom();
+        };
+
+        /* Select a chatroom to enter or create a new one. */
+        const renderSelectChatroom = () => {
+            $appContainer.innHTML('<h1>Select a chatroom page</h1>');
+
+        };
+
+        /* Render a chatroom and the chat history */
+        const renderChatroom = () => {
+            $appContainer.innHTML('<h1>Chatroom page</h1>');
+        };
+
+
+        /* Get DOM elements */
+        const $appContainer = document.querySelector('.app-container');
+
+        /* Global variables */
+        let globalUsername;
+        let jwtToken = localStorage.getItem('userjwt');
+
+        /* Start the app */
+        const startApp = () => {
+            fetch('/chatroom/api/session', {
+                headers: {
+                    Authorization: `Bearer ${jwtToken}`,
+                }
+            })
+                .then(res => res.json())
+                .then(body => {
+                    if (body.username) {
+                        globalUsername = body.username;
+                        return render();
+                    }
+                    return setupLogin();
+                })
+                .catch(console.error);
+
+        };
+        startApp();
+
+    </script>
 </body>
 </html>
