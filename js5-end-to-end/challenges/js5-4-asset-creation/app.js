@@ -1,6 +1,5 @@
 const fs = require('fs');
 const express = require('express');
-const { rejects } = require('assert');
 const app = express();
 const jsonParser = require('body-parser').json();
 
@@ -9,73 +8,69 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-/*
-Listen to incoming POST requests to /api/files to create a file.
-Listen to incoming GET requests to /api/files to get the an array containing all the files.
-Listen to incoming GET requests to /api/files/file-name to get the content of file-name.
+/* Directory of user-created files */
+const dir = './files';
 
-Note: fs.readdir takes in an argument (the path of folder) and a function.
-The function will be called with 2 arguments (error, data) when computer finishes.
-
-To prevent your server from getting filled up with junk files,
-your server must automatically delete files after a 5 minute mark for each file.
-*/
-
-/* Wrap the fs.writeFile function in a promise */
-const writeFilePromise = (filename, content) => {
-    return new Promise((resolve, reject) => {
-        fs.writeFile(`./files/${filename}`, content, (err) => {
-                if (err) reject(`Error writing to file: ${err}`);
-                resolve(`${filename} created successfully.`)
-        });
+/* Delete files in the ./files folder than 5 minutes (300,000 ms). */
+const deleteOldFiles = async () => {
+    const files = await fs.promises.readdir(dir);
+    files.forEach(async (file) => {
+        try {
+            const filepath = dir + '/' + file;
+            const stats = await fs.promises.stat(filepath);
+            /* stats.mtimeMs is last modified time of file */
+            /* stats.mtimeMs and Date.now() are expressed in [ms] since Unix epoch */
+            /* do not delete 'example.txt' */
+            if (file !== 'example.txt' &&
+                Date.now() - stats.mtimeMs > 300000) {
+                await fs.promises.unlink(filepath);
+                console.log(`Deleted ${file}`);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     });
+    /* recursively call this function every 30 seconds */
+    setTimeout(deleteOldFiles, 30000);
 };
+deleteOldFiles();
 
-/* Wrap the fs.readFile function in a promise */
-const readFilePromise = (filename) => {
-    return new Promise((resolve, reject) => {
-        fs.readFile(`./files/${filename}`, 'utf8', (err, data) => {
-            if (err) reject(`Error reading file: ${err}`);
-            resolve(data);
-        });
-    });
-};
-
-/* Wrap the fs.readdir function in a promise */
-const getFilenamesPromise = (path) => {
-    return new Promise((resolve, reject) => {
-        fs.readdir(path, (err, files) => {
-            if (err) reject(`Error getting filenames: ${err}`);
-            resolve(files);
-        });
-    });
-};
-
-/* Save button makes a POST request to /api/files */
-/* The body contains the filename and the content */
-app.post('/api/files', jsonParser, (req, res) => {
-    writeFilePromise(req.body.filename, req.body.content)
-        .then(() => { res.status(200).send('File write success.'); })
-        .catch(err => { res.status(500).send(err); });
+/* Request handler - saving (writing to) a file. */
+app.post('/api/files', jsonParser, async (req, res) => {
+    try {
+        const result = await fs.promises.writeFile(
+            `${dir}/${req.body.filename}`,
+            req.body.content,
+            'utf8'
+        );
+        res.status(200).json(result);
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-/* GET file contents */
-app.get('/api/files/:filename', (req, res) => {
-    console.log('ouch (GET) filename ', Date.now());
-    // console.log('filename is ', req.params.filename)
-    readFilePromise(req.params.filename)
-        .then(data => { res.status(200).json(data); })
-        .catch(err => { res.status(500).send(err); });
+/* Request handler - get a file's contents. */
+app.get('/api/files/:filename', async (req, res) => {
+    try {
+        const data = await fs.promises.readFile(
+            `./files/${req.params.filename}`,
+             'utf8'
+        );
+        res.status(200).json(data);
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-/* GET all filenames in the /files folder. */
-app.get('/api/files', (req, res) => {
-    console.log('ouch (GET)', Date.now());
-    getFilenamesPromise('./files')
-        .then(files => { res.status(200).json(files); })
-        .catch(err => { res.status(500).send(err); });
+/* Request handler - get all filenames in the /files folder. */
+app.get('/api/files', async (req, res) => {
+    try {
+        const files = await fs.promises.readdir('./files');
+        res.status(200).json(files);
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
-
 
 /* Start server */
 app.listen(3333, () => {

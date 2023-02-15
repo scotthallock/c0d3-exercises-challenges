@@ -13,7 +13,7 @@
 			--color-bg: #ebebeb;
 			--color-1: #4caf50;
 			--color-2: #2a742d;
-			--font-family-app: 'Roboto', sans-serif;
+			--font-family-app: Arial, sans-serif;
 		}
 		* {
 			margin: 0;
@@ -116,6 +116,10 @@
 			padding: 5px 10px;
 			border: none;
 		}
+		#current-file {
+			font-weight: bold;
+			color: var(--color-2);
+		}
 		#message {
 			color: red;
 		}
@@ -131,14 +135,17 @@
 		<div id="left-container">
 			<ul id="file-list"></ul>
 		</div>
-
 		<div id="editor-container">
 			<div id="editor-top">
-				<button id="new-file-button" class="button" type="button"><i class="fa-solid fa-plus"></i> New File</button>
-				<button id="save-button" class="button" type="button"><i class="fa-regular fa-floppy-disk"></i> Save File</button>
+				<button id="new-file-button" class="button" type="button">
+					<i class="fa-solid fa-plus"></i> New File
+				</button>
+				<button id="save-button" class="button" type="button">
+					<i class="fa-regular fa-floppy-disk"></i> Save File
+				</button>
 				<input type="text" id="new-file-input" class="label hide" placeholder="filename">
-				<span id="current-file" class="label hide">current file</span>
-				<span id="message" class="label hide">This is a message</span>
+				<span id="current-file" class="label hide"></span>
+				<span id="message" class="label hide"></span>
 			</div>
 			<div id="editor"></div>
 	</div>
@@ -146,7 +153,7 @@
 	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ext-modelist.js" type="text/javascript" charset="utf-8"></script>
 	<script>
-		/* Set up Ace editor */
+		/* Set up Ace code editor */
 		const editor = ace.edit("editor");
 		editor.setTheme("ace/theme/monokai");
 		editor.setReadOnly(true);
@@ -159,7 +166,13 @@
 		const $fileList = document.getElementById('file-list');
 		const $message = document.getElementById('message');
 
-		/* If the url is 'domainname.com/?[parameterName]=example.txt', return 'example.txt' */
+		/**
+		 * Get the value of the query parameter. This will be used to
+		 * make a GET request to get the file's contents.
+		 * Example: 
+		 *  - URL is 'domainname.com/?[parameterName]=example.txt'
+		 *  - This function will return 'example.txt'
+		 */
 		const findGetParameter = (parameterName) => {
 			const result = location.search.substr(1).split("&").find((item) => {
 				return item.split("=")[0] === parameterName;
@@ -168,12 +181,18 @@
 			return decodeURIComponent(result.split('=')[1]);
 		};
 
-		/* Save file */
+		/* User saves file */
 		$saveButton.addEventListener('click', () => {
 			$message.classList.add('hide');
+			/* User needs to create a new file or select a file to edit */
+			if ($newFileInput.classList.contains('hide') && $currentFile.classList.contains('hide')) {
+				$message.innerText = 'Create a new file, or select a file to edit.'
+				$message.classList.remove('hide');
+				return;
+			}
 			let filename = !$newFileInput.classList.contains('hide') ?
-				$newFileInput.value : // user clicked [New File]
-				$currentFile.innerText; // user is editing a file that exists
+				$newFileInput.value : // user is creating a new file
+				$currentFile.innerText; // user is saving a file that exists
 			filename = filename.trim();
 			if (filename.length === 0) {
 				$message.innerText = 'Enter a filename before saving.'
@@ -182,7 +201,6 @@
 				$newFileInput.focus();
 				return;
 			}
-
 			/* Make a POST request to the server with the file contents */
 			fetch('/api/files', {
 				method: 'POST',
@@ -193,16 +211,14 @@
 					filename: filename,
 					content: editor.getValue()
 				})
-			}).then(res => {
-				console.log(res);
-				console.log('gonna reload...')
+			})
+			.then(() => {
 				window.location.reload();
-			}).catch(err => {
-				console.error(err);
-			});
+			})
+			.catch(console.error);
 		});
 
-		/* Create new file */
+		/* User creates new file */
 		$newFileButton.addEventListener('click', () => {
 			editor.setReadOnly(false);
 			$message.classList.add('hide');
@@ -212,8 +228,11 @@
 			editor.setValue('');
 		});
 
+		/**
+		 * If there is a 'file' query parameter, load the
+		 * file's contents into the editor.
+		 */ 
 		const initialFilename = findGetParameter('file');
-		console.log({initialFilename});
 		if (initialFilename) {
 			fetch(`/api/files/${initialFilename}`)
 				.then(res => res.json())
@@ -227,12 +246,10 @@
 					const modelist = ace.require('ace/ext/modelist');
 					editor.session.setMode(modelist.getModeForPath(initialFilename).mode);
 				})
-				.catch(err => {
-					console.error(err);
-				});
+				.catch(console.error);
 		}
 
-		/* Constructor function that creates DOM elements for files in the file list */
+		/* Constructor function that also creates DOM elements for files in the file list */
 		function File(filename) {
 			this.filename = filename;
 			const $element = document.createElement('li');
@@ -256,20 +273,14 @@
 			});
 		};
 
-		/* Get files in server */
+		/* Get all the user-created files in the server */
 		let allFiles;
 		fetch('/api/files')
 			.then(res => res.json())
 			.then(data => {
 				allFiles = data.map(e => new File(e));
-				console.log(allFiles);
 			})
-			.catch(err => {
-				console.error(err);
-			});
-
-
-
+			.catch(console.error);
 	</script>
 </body>
 </html>
