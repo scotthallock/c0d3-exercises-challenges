@@ -5,11 +5,15 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Asset Creation</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 	<style>
 		:root {
 			--color-bg: #ebebeb;
 			--color-1: #4caf50;
 			--color-2: #2a742d;
+			--font-family-app: 'Roboto', sans-serif;
 		}
 		* {
 			margin: 0;
@@ -19,14 +23,22 @@
 		body {
 			background-color: var(--color-bg);
 		}
-		h1 {
+		h1, h2 {
 			display: block;
 			padding: 10px;
+			font-family: var(--font-family-app);
 			text-align: center;
-			font: 20px Arial, sans-serif;
+			font-weight: normal;
+
+		}
+		h1 {
+			font-size: 20px;
+		}
+		h2 {
+			font-size: 16px;
 		}
 		.label {
-			font: 16px Arial, sans-serif;
+			font: 16px var(--font-family-app);
 			padding: 5px;
 		}
 		#new-file-filename {
@@ -71,7 +83,7 @@
 			gap: 10px;
 			overflow: auto;
 			overflow-x: hidden;
-			font: 16px Arial, sans-serif;
+			font: 16px var(--font-family-app);
 		}
 		.file-list-item {
 			list-style: none;
@@ -100,34 +112,36 @@
 		#editor {
 			flex-grow: 1;
 		}
-		#current-file {
+		#new-file-input {
 			padding: 5px 10px;
 			border: none;
+		}
+		#message {
+			color: red;
+		}
+		.hide {
+			display: none;
 		}
 	</style>
 </head>
 <body>
-	<h1>Code Editor - files saved on server</h1>
+	<h1><b>Code Editor</b> - write code and save on the server.</h1>
+	<h2>Click <b>New File</b> to start coding. All files except for example.txt will be automatically deleted after 5 minutes.</h2>
 	<div id="main-container">
 		<div id="left-container">
-			<ul id="file-list">
-				<!-- <li class="file-list-item"><a class="file button" href="">File1</a><i class="fa-solid fa-download button"></i></li>
-				<li class="file-list-item"><a class="file button" href="">File2</a><i class="fa-solid fa-download button"></i></li>
-				<li class="file-list-item"><a class="file button" href="">File3</a><i class="fa-solid fa-download button"></i></li>
-				<li class="file-list-item"><a class="file button" href="">File4</a><i class="fa-solid fa-download button"></i></li> -->
-			</ul>
+			<ul id="file-list"></ul>
 		</div>
 
 		<div id="editor-container">
 			<div id="editor-top">
 				<button id="new-file-button" class="button" type="button"><i class="fa-solid fa-plus"></i> New File</button>
 				<button id="save-button" class="button" type="button"><i class="fa-regular fa-floppy-disk"></i> Save File</button>
-				<input type="text" id="current-file" class="label" placeholder="filename">
+				<input type="text" id="new-file-input" class="label hide" placeholder="filename">
+				<span id="current-file" class="label hide">current file</span>
+				<span id="message" class="label hide">This is a message</span>
 			</div>
-			<div id="editor">const x = (item) => { console.log(item) };</div>
-		</div>
+			<div id="editor"></div>
 	</div>
-
 	<script src="https://kit.fontawesome.com/4f647682c3.js" crossorigin="anonymous"></script>
 	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ext-modelist.js" type="text/javascript" charset="utf-8"></script>
@@ -135,16 +149,17 @@
 		/* Set up Ace editor */
 		const editor = ace.edit("editor");
 		editor.setTheme("ace/theme/monokai");
-		editor.session.setMode("ace/mode/javascript");
+		editor.setReadOnly(true);
 
 		/* Get DOM elements */
 		const $newFileButton = document.getElementById('new-file-button');
 		const $saveButton = document.getElementById('save-button');
+		const $newFileInput = document.getElementById('new-file-input');
 		const $currentFile = document.getElementById('current-file');
 		const $fileList = document.getElementById('file-list');
+		const $message = document.getElementById('message');
 
-
-		/* */
+		/* If the url is 'domainname.com/?[parameterName]=example.txt', return 'example.txt' */
 		const findGetParameter = (parameterName) => {
 			const result = location.search.substr(1).split("&").find((item) => {
 				return item.split("=")[0] === parameterName;
@@ -155,17 +170,28 @@
 
 		/* Save file */
 		$saveButton.addEventListener('click', () => {
-			console.log('clicked save button');
-			const filename = $currentFile.value;
-			const content = editor.getValue();
+			$message.classList.add('hide');
+			let filename = !$newFileInput.classList.contains('hide') ?
+				$newFileInput.value : // user clicked [New File]
+				$currentFile.innerText; // user is editing a file that exists
+			filename = filename.trim();
+			if (filename.length === 0) {
+				$message.innerText = 'Enter a filename before saving.'
+				$message.classList.remove('hide');
+				$newFileInput.value = '';
+				$newFileInput.focus();
+				return;
+			}
+
+			/* Make a POST request to the server with the file contents */
 			fetch('/api/files', {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json'
 				},
 				body: JSON.stringify({
-					filename,
-					content
+					filename: filename,
+					content: editor.getValue()
 				})
 			}).then(res => {
 				console.log(res);
@@ -176,15 +202,27 @@
 			});
 		});
 
+		/* Create new file */
+		$newFileButton.addEventListener('click', () => {
+			editor.setReadOnly(false);
+			$message.classList.add('hide');
+			$currentFile.classList.add('hide');
+			$newFileInput.classList.remove('hide');
+			$newFileInput.focus();
+			editor.setValue('');
+		});
+
 		const initialFilename = findGetParameter('file');
 		console.log({initialFilename});
 		if (initialFilename) {
 			fetch(`/api/files/${initialFilename}`)
 				.then(res => res.json())
 				.then(data => {
-					console.log(data);
-					editor.setValue(data);
-					$currentFile.value = initialFilename;
+					/* update DOM elements */
+					$currentFile.innerText = initialFilename;
+					$currentFile.classList.remove('hide');
+					editor.setValue(data, 1); // 1 sets the cursor to the end
+					editor.setReadOnly(false);
 					/* set the syntax highlighting based on file extension */
 					const modelist = ace.require('ace/ext/modelist');
 					editor.session.setMode(modelist.getModeForPath(initialFilename).mode);
@@ -201,10 +239,10 @@
 			$element.innerHTML = `
 			<li class="file-list-item">
 				<a class="file button" href="?file=${filename}">${filename}</a>
-				<i class="fa-solid fa-download button"></i>
+				<i class="fa-solid fa-up-right-from-square button"></i>
 			</li>`;
 			$fileList.append($element);
-			const $openButton = $element.querySelector('.fa-download')
+			const $openButton = $element.querySelector('.fa-up-right-from-square')
 			$openButton.addEventListener('click', () => {
 				fetch(`/api/files/${filename}`)
 					.then(res => res.json())
