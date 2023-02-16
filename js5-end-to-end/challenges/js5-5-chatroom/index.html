@@ -18,45 +18,6 @@
     <main>
         <div class="app-container"></div>
     </main>
-    
-    <!--Select a chatroom or create a new one-->
-    <h1>Chat rooms</h1>
-    <div class="create-new-room">
-        <input class="chatroom-name" type="text" placeholder="chatroom name"><br>
-        <input class="chartoom-description" type="text" placeholder="chatroom description"><br>
-        <button class="submit">Create Room</button>
-    </div>
-    <br>
-    <div class="chatrooms">
-        <a class="enter-chatroom" href="">
-            Chatroom 1 name <br>
-            Chatroom 1 description
-        </a><br><br>
-        <a class="enter-chatroom" href="">
-            Chatroom 2 name  <br>
-            Chatroom 2 description
-        </a><br><br>
-        <a class="enter-chatroom" href="">
-            Chatroom 3 name  <br>
-            Chatroom 3 description
-        </a><br>
-    </div>
-    
-    <hr>
-    <!--Chatroom-->
-    <h1>Cat Facts</h1>
-    <h2>A place to share feline trivia</h2>
-    <a class="go-back" href="">Go back to chat rooms</a>
-    <br>
-    <div class="chat">
-        <input class="new-message" type="text" placeholder="new message">
-        <div class="message-history">
-            <span class="message">User 1: hey hi hello</span><br>
-            <span class="message">User 2: whats up dudes</span><br>
-            <span class="message">User 3: i'm hungry</span><br>
-        </div>
-    </div>
-
 
     <script>
         /* Render the log-in form */
@@ -76,22 +37,27 @@
             const $username = document.querySelector('.username');
             const $password = document.querySelector('.password');
             const $submit = document.querySelector('.submit');
+            const $alert = document.querySelector('.alert');
 
             $instead.addEventListener('click', setupSignup);
             $submit.addEventListener('click', () => {
                 /* The server will check if the fields are filled out correctly */
-                fetch('/auth/api/session', {
+                fetch('https://js5.c0d3.com/auth/api/sessions', {
                     method: 'POST',
+                    credentials: 'include', // so the browser sets the cookie
                     headers: {
                         'content-type': 'application/json'
                     },
                     body: JSON.stringify({
                         username: $username.value,
-                        password: btoa($password.value) // encrypt password
+                        password: btoa($password.value)
                     })
                 })
                 .then(res => res.json())
                 .then(body => {
+                    if (body.error) {
+                        $alert.innerText = `Error: ${body.error.message}`;
+                    }
                     if (body.jwt && body.username) {
                         jwtToken = body.jwt;
                         globalUsername = body.username;
@@ -130,9 +96,11 @@
             
             $instead.addEventListener('click', setupLogin);
             $submit.addEventListener('click', () => {
-                /* The server will check if the fields are filled out correctly */
-                fetch('/auth/api/users', {
+                /* Make POST request to 3rd-party API to handle user
+                   authentication. */
+                fetch('https://js5.c0d3.com/auth/api/users', {
                     method: 'POST',
+                    credentials: 'include', // so the browser sets the cookie
                     headers: {
                         'content-type': 'application/json'
                     },
@@ -145,6 +113,10 @@
                 })
                     .then(res => res.json())
                     .then(body => {
+                        if (body.error) {
+                            console.error('Error during signup: ', body.error);
+                            return;
+                        }
                         if (body.jwt && body.username) {
                             jwtToken = body.jwt;
                             globalUsername = body.username;
@@ -173,15 +145,134 @@
 
         /* Select a chatroom to enter or create a new one. */
         const renderSelectChatroom = () => {
-            $appContainer.innHTML('<h1>Select a chatroom page</h1>');
+            $appContainer.innerHTML = `
+                <h1>Enter a chatroom</h1>
+                <div class="rooms-container"></div>
+                <hr>
+                <h1>Or create one:</h1>
+                <input class="room-name" type="text" placeholder="room name">
+                <input class="room-description" type="text" placeholder="description">
+                <button class="submit">Create Room</button>
+                <p class="alert"></p>
+            `;
+            const $roomsContainer = document.querySelector('.rooms-container');
+            const $roomName = document.querySelector('.room-name');
+            const $roomDescription = document.querySelector('.room-description');
+            const $submit = document.querySelector('.submit');
+            const $alert = document.querySelector('.alert');
+            // make a request to /chatroom/api/rooms
+            // and fill the div with rooms
+            fetch('/chatroom/api/rooms', {
+                headers: {
+                    Authorization: `Bearer ${jwtToken}`
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        $roomsContainer.innerText = 'No chatrooms...';
+                        return;
+                    }
+                    data.forEach(room => {
+                        const element = `
+                            <a href="/chatroom/${room.name}">Go to ${room.name}: ${room.description}</a>
+                            <br>
+                        `;
+                        $roomsContainer.insertAdjacentHTML('beforeend', element);
+                    });
+                })
+                .catch(console.error);
 
+            /* Create a new chatroom */
+            $submit.addEventListener('click', () => {
+                const name = $roomName.value;
+                const description = $roomDescription.value;
+                /* input validation */
+                if (!/^[a-zA-Z0-9 ]{4,20}$/.test(name)) {
+                    $alert.innerText = 'Room name must be 4-20 characters long and contain no special characters or spaces'
+                    return;
+                }
+                if (!/^[a-zA-Z0-9 ]{4,40}$/.test(description)) {
+                    $alert.innerText = 'Decription must be 4-40 characters long and contain no special characters or spaces'
+                    return;
+                }
+
+                /* Send request to create new room */
+                fetch('/chatroom/api/rooms', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        Authorization: `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({
+                        name: $roomName.value,
+                        description: $roomDescription.value
+                    })
+                })
+                    .then(res => res.json())
+                    .then(body => {
+                        console.log('BODY');
+                        console.log(body);
+                        if (body.error) {
+                            $alert.innerText = body.error.message;
+                        } else {
+                            // go to the room
+                            window.location = `/chatroom/${name}`;
+                        }
+                    })
+                    .catch(console.error)
+            });
         };
 
         /* Render a chatroom and the chat history */
         const renderChatroom = () => {
-            $appContainer.innHTML('<h1>Chatroom page</h1>');
-        };
+            const room = window.location.pathname.split("/")[2];
+            $appContainer.innerHTML = `
+                <h1>Chatroom: ${decodeURIComponent(room)}</h1>
+                <div class="container"></div>
+                <input class="new-message" type="text">
+            `;
+            const $container = document.querySelector(".container");
+            const $newMessage = document.querySelector(".new-message");
 
+            /* Write a message in the chatroom. Called when the user presses [enter] */
+            const writeMessage = () => {
+                fetch(`/chatroom/api/${room}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        Authorization: `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({
+                        message: $newMessage.value,
+                        time: Date.now()
+                    }),
+                })
+                    .then(() => {
+                        $newMessage.value = '';
+                    })
+                    .catch(console.error);
+            };
+            
+            /* Populate the chatroom messages */
+            const renderMessages = () => {
+                fetch(`/chatroom/api/${room}/messages`)
+                    .then(res => res.json())
+                    .then(data => {
+                        $container.innerHTML = data.reduce((acc, e) => {
+                            return acc + `${e.user} ... ${e.time} ... ${e.message}`;
+                        });
+                        setTimeout(renderMessages, 500); // repeat every half second
+                    })
+                    .catch(console.error);
+            };
+            renderMessages();
+
+            /* Press [enter] to write a message */
+            $newMessage.addEventListener('keydown', e => {
+                if (e.key === 'Enter') return writeMessage();
+            });
+        };
 
         /* Get DOM elements */
         const $appContainer = document.querySelector('.app-container');
@@ -199,6 +290,7 @@
             })
                 .then(res => res.json())
                 .then(body => {
+                    console.log('startApp: ', body);
                     if (body.username) {
                         globalUsername = body.username;
                         return render();

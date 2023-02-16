@@ -193,9 +193,11 @@
             },
         })
             .then((r) => {
+                console.log('Got a response...')
                 return r.json();
             })
             .then((body) => {
+                console.log({body})
                 if (body.username) {
                     globalUsername = body.username;
                     return render();
