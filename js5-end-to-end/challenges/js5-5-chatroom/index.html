@@ -7,14 +7,24 @@
     <title>Chatroom</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/andybrewer/mvp/mvp.css">
     <style>
-        /* :root {
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-        }
-        * {
-            font-family: var(--font-family);
-        } */
         .alert {
             color: #f44336;
+        }
+        .messages-container {
+            height: 500px;
+            overflow: auto;
+            display: flex;
+            /* most recent messages appear at bottom */
+            flex-direction: column-reverse;
+        }
+        .username {
+            font-weight: bold;
+        }
+        .self {
+            color: green;
+        }
+        .time {
+            color: #555;
         }
     </style>
 </head>
@@ -146,7 +156,7 @@
         /* Select a chatroom to enter or create a new one. */
         const renderSelectChatroom = () => {
             $appContainer.innerHTML = `
-                <h1>Enter a chatroom</h1>
+                <h1>Join a chatroom</h1>
                 <section class="rooms-container">
                 <aside>
                     <input class="room-name" type="text" placeholder="room name">
@@ -156,9 +166,6 @@
                 </aside>
                 </section>
                 <hr>
-                
-                
-                
             `;
             const $roomsContainer = document.querySelector('.rooms-container');
             const $roomName = document.querySelector('.room-name');
@@ -181,7 +188,7 @@
                     data.forEach(room => {
                         const element = `
                             <aside>
-                                <a href="/chatroom/${room.name}"><h3>${room.name}</h3></a>
+                                <a href="/chatroom/${room.name}"><h3>#${room.name}</h3></a>
                                 <p>${room.description}</p>
                             </aside>
                         `;
@@ -196,11 +203,11 @@
                 const description = $roomDescription.value;
                 /* input validation */
                 if (!/^[a-zA-Z0-9 ]{4,20}$/.test(name)) {
-                    $alert.innerText = 'Room name must be 4-20 characters long and contain no special characters or spaces'
+                    $alert.innerText = `Room name must be 4-20 characters long and contain no special characters.`
                     return;
                 }
-                if (!/^[a-zA-Z0-9 ]{4,40}$/.test(description)) {
-                    $alert.innerText = 'Description must be 4-40 characters long and contain no special characters or spaces'
+                if (!/^[a-zA-Z0-9,. ]{4,40}$/.test(description)) {
+                    $alert.innerText = `Description must be 4-40 characters long. Only special characters allowed are ',' and '.'`;
                     return;
                 }
 
@@ -235,13 +242,17 @@
         const renderChatroom = () => {
             const room = window.location.pathname.split("/")[2];
             $appContainer.innerHTML = `
-                <h1>Chatroom: ${decodeURIComponent(room)}</h1>
-                <a href="/chatroom">Back to chatroom select</a>
-                <div class="container"></div>
-                <input class="new-message" type="text">
+                <h1>#${decodeURIComponent(room)}</h1>
+                <a href="/chatroom">Back to chatrooms</a>
+                <br><br>
+                <div class="messages-container"></div>
+                <br>
+                <input class="new-message" type="text" placeholder="message #${decodeURIComponent(room)}">
+                <hr>
             `;
-            const $container = document.querySelector(".container");
+            const $container = document.querySelector(".messages-container");
             const $newMessage = document.querySelector(".new-message");
+            $newMessage.focus();
 
             /* Write a message in the chatroom. Called when the user presses [enter] */
             const writeMessage = () => {
@@ -267,9 +278,13 @@
                 fetch(`/chatroom/api/${room}/messages`)
                     .then(res => res.json())
                     .then(data => {
-                        $container.innerHTML = data.reduce((acc, e) => {
-                            // add special color if globaluser is equal to e.user
-                            return acc + `<div>${e.user} ... ${e.time} ... ${e.message}</div>`;
+                        $container.innerHTML = data.reduceRight((acc, e) => {
+                            const self = (globalUsername === e.user); // own username different color
+                            return acc + `<div>
+                                <span class="${self ? 'username self' : 'username'}">${e.user}</span>&nbsp;
+                                <span class="time">${e.time}</span><br>
+                                <span class="message">${e.message}</span>
+                                </div>`;
                         }, '');
                         setTimeout(renderMessages, 500); // repeat every half second
                     })
@@ -279,6 +294,7 @@
 
             /* Press [enter] to write a message */
             $newMessage.addEventListener('keydown', e => {
+                console.log(globalUsername)
                 if (e.key === 'Enter') return writeMessage();
             });
         };

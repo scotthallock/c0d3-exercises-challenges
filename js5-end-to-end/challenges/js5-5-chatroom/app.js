@@ -31,20 +31,25 @@ class Chatroom {
 
 
 // could I create a chatroom class for this?
-const allChatrooms = {
-    'Cat facts': {
-        description: 'All things about cats',
-        messages: []
-    },
-    'Shakespeare quotes': {
-        decsription: 'Only the best',
-        messages: []
-    },
-    'Gamers': {
-        decsription: 'Waddup',
-        messages: []
-    }
-};
+// const allChatrooms = {
+//     'Cat facts': {
+//         description: 'All things about cats',
+//         messages: []
+//     },
+//     'Shakespeare quotes': {
+//         decsription: 'Only the best',
+//         messages: []
+//     },
+//     'Gamers': {
+//         decsription: 'Waddup',
+//         messages: []
+//     }
+// };
+
+const allChatrooms = [
+    new Chatroom('Shakespeare quotes', 'The best quotes from the works of William Shakespeare.'),
+    new Chatroom('Cats and Dogs', 'Get in touch with other house pets around the world. No fighting, please.')
+];
 
 /* Middleware: get user data (username, email, etc.) from the JSON Web Token (JWT) */
 /* Every request to this server MUST include an 'Authorization' header */
@@ -83,10 +88,7 @@ app.get('/chatroom', (req, res) => {
 
 /* Check if the chatroom in the url exists, then send index.html */
 app.get('/chatroom/:room', (req, res) => {
-    // const roomExists = allChatrooms.some(room => {
-    //     return room.name === req.params.room;
-    // });
-    const roomExists = Object.keys(allChatrooms).some(e => e === req.params.room);
+    const roomExists = allChatrooms.some(e => e.name === req.params.room);
     if (!roomExists) {
         return res.status(404).send(`This chatroom doesn't exist.`);
     }
@@ -98,13 +100,15 @@ app.get('/chatroom/:room', (req, res) => {
 app.get('/chatroom/api/:room/messages', (req, res) => {
     console.log('getting messages ouch ', Date.now());
 
-    const room = req.params.room;
-
-    if (!allChatrooms[room]) return console.log('Trying to get messages from a room that does not exist...');
+    const name = req.params.room;
+    const room = allChatrooms.find(e => e.name === name);
+    if (!room) {
+        return console.error('Trying to get messages from a room that does not exist...');
+    }
 
     /* Return the messages array, but replace timestamps 
        with fuzzy timestamps */
-    const messages = allChatrooms[room].messages.map(e => {
+    const messages = room.messages.map(e => {
         return {
             user: e.user,
             time: dayjs(e.time).fromNow(), // time ago
@@ -120,21 +124,22 @@ app.post('/chatroom/api/:room/messages', jsonParser, (req, res) => {
     console.log('posting message ouch ', Date.now());
     // what happens if req.user is error?
 
-    const room = req.params.room;
+    const name = req.params.room;
     const user = req.user.username;
     const time = req.body.time;
     const message = req.body.message;
+    const room = allChatrooms.find(e => e.name === name);
 
-    if (!allChatrooms[room]) return console.log('Trying to post a message in a room that does not exist...');
+    if (!room) {
+        return console.error('Trying to post a message in a room that does not exist...');
+    }
 
-    /* Add the message */
-    allChatrooms[room].messages.push({
+    /* Add the message to the chatroom */
+    room.messages.push({
         user,
         time,
         message
     });
-    console.log(allChatrooms[room].messages);
-
     res.sendStatus(200);
 });
 
@@ -142,10 +147,10 @@ app.post('/chatroom/api/:room/messages', jsonParser, (req, res) => {
 app.get('/chatroom/api/rooms', (req, res) => {
     // send back an array containing
     // the name and decsription of each chatroom
-    const data = Object.keys(allChatrooms).map(room => {
+    const data = allChatrooms.map(e => {
         return {
-            name: room,
-            description: allChatrooms[room].description
+            name: e.name,
+            description: e.description
         };
     });
     res.status(200).json(data);
@@ -156,35 +161,33 @@ app.post('/chatroom/api/rooms', jsonParser, (req, res) => {
     const name = req.body.name;
     const description = req.body.description;
     /* If a room with that name already exists, reject it */
-    const isDuplicate = Object.keys(allChatrooms).some(e => {
-        return e.toLowerCase() === name.toLowerCase();
+    const isDuplicate = allChatrooms.some(e => {
+        return e.name.toLowerCase() === name.toLowerCase();
     });
     if (isDuplicate) {
         console.log('Duplicate name');
         return res.status(400).json({error: {message: 'Room with that name already exists.'}})
     }
     /* Add the new chatroom */
-    allChatrooms[name] = {
-        description,
-        messages: []
-    };
+    allChatrooms.push(new Chatroom(name, description));
     res.status(200).json('OK');
 });
 
 const shakespeareQuotes = require('./shakespeare');
 const shakespeareBots = ['ShakespeareBot1', 'ShakespeareBot2', 'ShakespeareBot3'];
 
-/* returns a random element from the input array */
+/* Helper function: return a random element from the input array */
 const randElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // Shakespeare bot - posts in the #Shakespeare room every few seconds
+const shakespeareRoom = allChatrooms.find(e => e.name === 'Shakespeare quotes');
 const shakespeareBotPost = () => {
-    allChatrooms['Shakespeare quotes'].messages.push({
+    shakespeareRoom.messages.push({
         user: randElement(shakespeareBots),
         time: Date.now(),
         message: randElement(shakespeareQuotes)
-    })
-    setTimeout(shakespeareBotPost, 1000 * 5);
+    });
+    setTimeout(shakespeareBotPost, 1000 * 20);
 };
 shakespeareBotPost();
 
