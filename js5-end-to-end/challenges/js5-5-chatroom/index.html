@@ -18,7 +18,6 @@
     <main>
         <div class="app-container"></div>
     </main>
-
     <script>
         /* Render the log-in form */
         const setupLogin = () => {
@@ -229,6 +228,7 @@
             const room = window.location.pathname.split("/")[2];
             $appContainer.innerHTML = `
                 <h1>Chatroom: ${decodeURIComponent(room)}</h1>
+                <a href="/chatroom">Back to chatroom select</a>
                 <div class="container"></div>
                 <input class="new-message" type="text">
             `;

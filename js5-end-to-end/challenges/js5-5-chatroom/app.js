@@ -1,7 +1,10 @@
-const { json } = require('express');
 const express = require('express');
 const jsonParser = require('body-parser').json();
+const dayjs = require('dayjs');
+const relativeTime = require('dayjs/plugin/relativeTime');
+dayjs.extend(relativeTime);
 const app = express();
+
 
 // could I create a chatroom class for this?
 const allChatrooms = {
@@ -87,8 +90,16 @@ app.get('/chatroom/api/:room/messages', (req, res) => {
 
     /* Return the messages array, but replace timestamps 
        with fuzzy timestamps */
+    console.log(allChatrooms[room].messages)
+    const messages = allChatrooms[room].messages.map(e => {
+        return {
+            user: e.user,
+            time: dayjs(e.time).fromNow(), // time ago
+            message: e.message
+        };
+    });
 
-    res.status(200).json(allChatrooms[room].messages);
+    res.status(200).json(messages);
 });
 
 /* Post a message in the chatroom */
@@ -146,6 +157,23 @@ app.post('/chatroom/api/rooms', jsonParser, (req, res) => {
     };
     res.status(200).json('OK');
 });
+
+const shakespeareQuotes = require('./shakespeare');
+const shakespeareBots = ['ShakespeareBot1', 'ShakespeareBot2', 'ShakespeareBot3'];
+
+/* returns a random element from the input array */
+const randElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// Shakespeare bot - posts in the #Shakespeare room every few seconds
+const shakespeareBotPost = () => {
+    allChatrooms['Shakespeare quotes'].messages.push({
+        user: randElement(shakespeareBots),
+        time: Date.now(),
+        message: randElement(shakespeareQuotes)
+    })
+    setTimeout(shakespeareBotPost, 1000 * 5);
+};
+shakespeareBotPost();
 
 
 /* Start server */
