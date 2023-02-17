@@ -5,23 +5,36 @@ const relativeTime = require('dayjs/plugin/relativeTime');
 dayjs.extend(relativeTime);
 const app = express();
 
+class Chatroom {
+    constructor(name, description) {
+        this.name = name;
+        this.description = description;
+        this.messages = [];
+    }
+
+    addMessage(user, time, message) {
+        this.messages.push({
+            user,
+            time,
+            message
+        });
+        /* Only store last 100 messages */
+        if (this.messages.length >= 100) {
+            this.messages.shift();
+        }
+    }
+
+    getMessages() {
+        /* return messages with 'time ago' timestamps */
+    }
+}
+
 
 // could I create a chatroom class for this?
 const allChatrooms = {
     'Cat facts': {
         description: 'All things about cats',
-        messages: [
-            // {
-            //     user: 'cat-fan-1',
-            //     time: 0,
-            //     message: 'cats have 4 legs'
-            // },
-            // {
-            //     user: 'cat-guy',
-            //     time: 0,
-            //     message: 'cats are mammals'
-            // },
-        ]
+        messages: []
     },
     'Shakespeare quotes': {
         decsription: 'Only the best',
@@ -44,6 +57,7 @@ app.use('/chatroom/*', (req, res, next) => {
     })
         .then(res => res.json())
         .then(data => {
+            console.log(data);
             /**
              * Set the data into the request object.
              * The data object will look like this...
@@ -90,7 +104,6 @@ app.get('/chatroom/api/:room/messages', (req, res) => {
 
     /* Return the messages array, but replace timestamps 
        with fuzzy timestamps */
-    console.log(allChatrooms[room].messages)
     const messages = allChatrooms[room].messages.map(e => {
         return {
             user: e.user,

@@ -5,12 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatroom</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/andybrewer/mvp/mvp.css">
     <style>
-        :root {
+        /* :root {
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
         }
         * {
             font-family: var(--font-family);
+        } */
+        .alert {
+            color: #f44336;
         }
     </style>
 </head>
@@ -26,11 +30,12 @@
                 <h1>You must be logged in</h1>
                 <p>No account? You can 
                     <a href="#" class="instead">Sign up instead</a>
-                </p><br>
-                <input class="username" type="text" placeholder="username"><br>
-                <input class="password" type="password" placeholder="password"><br>
-                <button class="submit">Log In</button><br>
-                <span class="alert">This is an alert message.</span><br>
+                </p>
+                <input class="username" type="text" placeholder="username">
+                <input class="password" type="password" placeholder="password">
+                <button class="submit">Log In</button>
+                <p class="alert"></p>
+                <hr>
             `;
             const $instead = document.querySelector('.instead');
             const $username = document.querySelector('.username');
@@ -64,10 +69,7 @@
                         render();
                     }
                 })
-                .catch(err => {
-                    /* Tell the user what went wrong when logging in */
-                    console.error(err);
-                });
+                .catch(console.error);
             });
         };
 
@@ -78,13 +80,14 @@
                 <h1>Create a new account</h1>
                 <p>Already have one? You can 
                     <a href="#" class="instead">Login instead</a>
-                </p><br>
-                <input class="name" type="text" placeholder="full name"><br>
-                <input class="username" type="text" placeholder="username"><br>
-                <input class="email" type="email" placeholder="email"><br>
-                <input class="password" type="password" placeholder="password"><br>
-                <button class="submit">Create Account</button><br>
-                <span class="alert">This is an alert message.</span>
+                </p>
+                <input class="name" type="text" placeholder="full name">
+                <input class="username" type="text" placeholder="username">
+                <input class="email" type="email" placeholder="email">
+                <input class="password" type="password" placeholder="password">
+                <button class="submit">Create Account</button>
+                <p class="alert"></p>
+                <hr>
             `;
             const $instead = document.querySelector(".instead");
             const $name = document.querySelector(".name");
@@ -92,6 +95,7 @@
             const $email = document.querySelector(".email");
             const $password = document.querySelector(".password");
             const $submit = document.querySelector(".submit");
+            const $alert = document.querySelector('.alert');
             
             $instead.addEventListener('click', setupLogin);
             $submit.addEventListener('click', () => {
@@ -113,7 +117,7 @@
                     .then(res => res.json())
                     .then(body => {
                         if (body.error) {
-                            console.error('Error during signup: ', body.error);
+                            $alert.innerText = `Error: ${body.error.message}`;
                             return;
                         }
                         if (body.jwt && body.username) {
@@ -123,10 +127,7 @@
                             render();
                         }
                     })
-                    .catch(err => {
-                        /* Tell the user what went wrong when signing up */
-                        console.error(err);
-                    });
+                    .catch(console.error);
             });
 
         };
@@ -146,13 +147,18 @@
         const renderSelectChatroom = () => {
             $appContainer.innerHTML = `
                 <h1>Enter a chatroom</h1>
-                <div class="rooms-container"></div>
+                <section class="rooms-container">
+                <aside>
+                    <input class="room-name" type="text" placeholder="room name">
+                    <input class="room-description" type="text" placeholder="description">
+                    <button class="submit">Create New Room</button>
+                    <p class="alert"></p>
+                </aside>
+                </section>
                 <hr>
-                <h1>Or create one:</h1>
-                <input class="room-name" type="text" placeholder="room name">
-                <input class="room-description" type="text" placeholder="description">
-                <button class="submit">Create Room</button>
-                <p class="alert"></p>
+                
+                
+                
             `;
             const $roomsContainer = document.querySelector('.rooms-container');
             const $roomName = document.querySelector('.room-name');
@@ -174,8 +180,10 @@
                     }
                     data.forEach(room => {
                         const element = `
-                            <a href="/chatroom/${room.name}">Go to ${room.name}: ${room.description}</a>
-                            <br>
+                            <aside>
+                                <a href="/chatroom/${room.name}"><h3>${room.name}</h3></a>
+                                <p>${room.description}</p>
+                            </aside>
                         `;
                         $roomsContainer.insertAdjacentHTML('beforeend', element);
                     });
@@ -192,7 +200,7 @@
                     return;
                 }
                 if (!/^[a-zA-Z0-9 ]{4,40}$/.test(description)) {
-                    $alert.innerText = 'Decription must be 4-40 characters long and contain no special characters or spaces'
+                    $alert.innerText = 'Description must be 4-40 characters long and contain no special characters or spaces'
                     return;
                 }
 
