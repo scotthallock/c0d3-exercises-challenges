@@ -8,16 +8,16 @@ const allChatrooms = {
     'Cat facts': {
         description: 'All things about cats',
         messages: [
-            {
-                user: 'cat-fan-1',
-                time: 0,
-                message: 'cats have 4 legs'
-            },
-            {
-                user: 'cat-guy',
-                time: 0,
-                message: 'cats are mammals'
-            },
+            // {
+            //     user: 'cat-fan-1',
+            //     time: 0,
+            //     message: 'cats have 4 legs'
+            // },
+            // {
+            //     user: 'cat-guy',
+            //     time: 0,
+            //     message: 'cats are mammals'
+            // },
         ]
     },
     'Shakespeare quotes': {
@@ -41,14 +41,13 @@ app.use('/chatroom/*', (req, res, next) => {
     })
         .then(res => res.json())
         .then(data => {
-            console.log(data);
             /**
-             * The data object will look like this:
+             * Set the data into the request object.
+             * The data object will look like this...
              *     {username: '...', name: '...', email: '...', id: '...', jwt: '...'}
-             * Or like this:
+             * Or like this...
              *     {data: {message: 'Not logged in'}}
              */
-            /* Set the data into the request object */
             req.user = data;
             next();
         })
@@ -80,7 +79,16 @@ app.get('/chatroom/:room', (req, res) => {
 
 /* Get the all the messages in the chatroom */
 app.get('/chatroom/api/:room/messages', (req, res) => {
+    console.log('getting messages ouch ', Date.now());
 
+    const room = req.params.room;
+
+    if (!allChatrooms[room]) return console.log('Trying to get messages from a room that does not exist...');
+
+    /* Return the messages array, but replace timestamps 
+       with fuzzy timestamps */
+
+    res.status(200).json(allChatrooms[room].messages);
 });
 
 /* Post a message in the chatroom */
@@ -95,13 +103,15 @@ app.post('/chatroom/api/:room/messages', jsonParser, (req, res) => {
 
     if (!allChatrooms[room]) return console.log('Trying to post a message in a room that does not exist...');
 
-    // const room = allChatrooms.find()
-    // POST THE MESSAGE IN THE ROOM
+    /* Add the message */
+    allChatrooms[room].messages.push({
+        user,
+        time,
+        message
+    });
+    console.log(allChatrooms[room].messages);
 
-    console.log({room, user, time, message});
-
-    res.status(200).json('ok');
-
+    res.sendStatus(200);
 });
 
 /* Send chatroom names and descriptions to client */

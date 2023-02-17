@@ -260,8 +260,9 @@
                     .then(res => res.json())
                     .then(data => {
                         $container.innerHTML = data.reduce((acc, e) => {
-                            return acc + `${e.user} ... ${e.time} ... ${e.message}`;
-                        });
+                            // add special color if globaluser is equal to e.user
+                            return acc + `<div>${e.user} ... ${e.time} ... ${e.message}</div>`;
+                        }, '');
                         setTimeout(renderMessages, 500); // repeat every half second
                     })
                     .catch(console.error);
